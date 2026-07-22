@@ -81,11 +81,7 @@ pub fn hide_options_window(
     app: AppHandle,
     state: State<'_, OptionsWindowState>,
 ) -> Result<(), String> {
-    state
-        .0
-        .lock()
-        .map_err(|error| error.to_string())?
-        .requested = false;
+    state.0.lock().map_err(|error| error.to_string())?.requested = false;
 
     app.get_webview_window(OPTIONS_WINDOW_LABEL)
         .ok_or_else(|| "Options window is unavailable".to_string())?

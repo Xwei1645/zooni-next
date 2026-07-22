@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { LoaderCircle, Monitor, Moon, Sun } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -29,6 +29,14 @@ export function AppearanceSettings({
 }: AppearanceSettingsProps) {
   const [systemFonts, setSystemFonts] = useState<string[]>([]);
   const [fontsLoading, setFontsLoading] = useState(true);
+  const [backgroundOpacity, setBackgroundOpacity] = useState(settings.backgroundOpacity);
+  const adjustingOpacity = useRef(false);
+
+  useEffect(() => {
+    if (!adjustingOpacity.current) {
+      setBackgroundOpacity(settings.backgroundOpacity);
+    }
+  }, [settings.backgroundOpacity]);
 
   useEffect(() => {
     let active = true;
@@ -154,6 +162,40 @@ export function AppearanceSettings({
             ))}
           </SelectContent>
         </Select>
+      </div>
+      <div className="settings-section settings-opacity-row">
+        <div className="settings-field-heading">
+          <h3>背景不透明度</h3>
+          <p>调整主窗口背景的不透明程度。</p>
+        </div>
+        <div className="opacity-control">
+          <input
+            className="opacity-slider"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={backgroundOpacity}
+            aria-label="主窗口背景不透明度"
+            aria-valuetext={`${backgroundOpacity}%`}
+            style={{ "--opacity-progress": `${backgroundOpacity}%` } as CSSProperties}
+            onPointerDown={() => {
+              adjustingOpacity.current = true;
+            }}
+            onPointerUp={() => {
+              adjustingOpacity.current = false;
+            }}
+            onPointerCancel={() => {
+              adjustingOpacity.current = false;
+            }}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              setBackgroundOpacity(value);
+              onSettingsChange({ ...settings, backgroundOpacity: value });
+            }}
+          />
+          <output className="opacity-value">{backgroundOpacity}%</output>
+        </div>
       </div>
     </section>
   );

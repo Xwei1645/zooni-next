@@ -22,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { applyWindowBackgroundOpacity } from "@/lib/appearance";
 import { useWindowSettings } from "@/lib/settings";
 import { openOptionsWindow } from "@/lib/windows";
 
@@ -30,8 +31,15 @@ import "./App.css";
 function App() {
   const settings = useWindowSettings();
   const mainWindowShown = useRef(false);
+  const backgroundOpacity = settings?.backgroundOpacity;
   const [zoom, setZoom] = useState(100);
   const [columnCount, setColumnCount] = useState(3);
+
+  useEffect(() => {
+    if (backgroundOpacity !== undefined) {
+      applyWindowBackgroundOpacity(backgroundOpacity);
+    }
+  }, [backgroundOpacity]);
 
   useEffect(() => {
     if (!isTauri() || !settings || mainWindowShown.current) {

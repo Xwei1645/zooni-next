@@ -11,6 +11,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 
 const SETTINGS_FILE_NAME: &str = "settings.json";
 const PERSIST_DELAY: Duration = Duration::from_millis(500);
+const DEFAULT_BACKGROUND_OPACITY: u8 = 100;
 
 #[derive(Clone, Copy, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -25,11 +26,13 @@ pub enum Appearance {
 pub struct AppSettings {
     appearance: Appearance,
     font_family: String,
+    #[serde(default = "default_background_opacity")]
+    background_opacity: u8,
 }
 
 impl AppSettings {
     fn is_valid(&self) -> bool {
-        !self.font_family.trim().is_empty()
+        !self.font_family.trim().is_empty() && self.background_opacity <= 100
     }
 }
 
@@ -38,8 +41,13 @@ impl Default for AppSettings {
         Self {
             appearance: Appearance::System,
             font_family: "__default__".into(),
+            background_opacity: DEFAULT_BACKGROUND_OPACITY,
         }
     }
+}
+
+fn default_background_opacity() -> u8 {
+    DEFAULT_BACKGROUND_OPACITY
 }
 
 #[derive(Clone, Serialize)]
@@ -209,5 +217,14 @@ mod tests {
                 .expect("settings should deserialize before semantic validation");
 
         assert!(!settings.is_valid());
+    }
+
+    #[test]
+    fn defaults_missing_background_opacity() {
+        let settings =
+            serde_json::from_str::<AppSettings>(r#"{"appearance":"light","fontFamily":"Inter"}"#)
+                .expect("existing settings should remain valid");
+
+        assert_eq!(settings.background_opacity, 100);
     }
 }

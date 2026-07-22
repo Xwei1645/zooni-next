@@ -6,11 +6,13 @@ export const DEFAULT_FONT_FAMILY = "__default__";
 export interface AppSettings {
   appearance: Appearance;
   fontFamily: FontFamily;
+  backgroundOpacity: number;
 }
 
 export const defaultSettings: AppSettings = {
   appearance: "system",
   fontFamily: DEFAULT_FONT_FAMILY,
+  backgroundOpacity: 100,
 };
 
 const DEFAULT_FONT_STACK =
@@ -37,5 +39,12 @@ export function applyFontFamily(fontFamily: FontFamily) {
   document.documentElement.style.setProperty(
     "--app-font-sans",
     fontFamilyStack(fontFamily),
+  );
+}
+
+export function applyWindowBackgroundOpacity(backgroundOpacity: number) {
+  document.documentElement.style.setProperty(
+    "--window-background-opacity",
+    String(backgroundOpacity / 100),
   );
 }
