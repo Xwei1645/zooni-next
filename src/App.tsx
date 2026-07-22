@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   BookOpen,
   Ellipsis,
@@ -10,8 +10,6 @@ import {
   Plus,
   Tags,
 } from "lucide-react";
-import { isTauri } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
 
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -22,56 +20,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  applyAppearance,
-  applyFontFamily,
-  type AppSettings,
-  defaultSettings,
-} from "@/lib/appearance";
-import { loadAppSettings } from "@/lib/settings";
+import { useWindowSettings } from "@/lib/settings";
 import { openOptionsWindow } from "@/lib/windows";
 
 import "./App.css";
 
 function App() {
+  useWindowSettings();
   const [zoom, setZoom] = useState(100);
   const [columnCount, setColumnCount] = useState(3);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const applySettings = (settings: AppSettings) => {
-      applyAppearance(settings.appearance, mediaQuery.matches);
-      applyFontFamily(settings.fontFamily);
-    };
-    let active = true;
-    let unlisten: (() => void) | undefined;
-
-    void loadAppSettings().then(applySettings).catch(() => applySettings(defaultSettings));
-
-    if (isTauri()) {
-      void listen<AppSettings>("settings-changed", ({ payload }) => {
-        applySettings(payload);
-      }).then((cleanup) => {
-        if (active) {
-          unlisten = cleanup;
-          return;
-        }
-
-        cleanup();
-      });
-    }
-
-    const updateSystemTheme = () => {
-      loadAppSettings().then(applySettings).catch(() => applySettings(defaultSettings));
-    };
-    mediaQuery.addEventListener("change", updateSystemTheme);
-
-    return () => {
-      active = false;
-      unlisten?.();
-      mediaQuery.removeEventListener("change", updateSystemTheme);
-    };
-  }, []);
 
   return (
     <main>

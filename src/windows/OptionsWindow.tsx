@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Copy,
   Minus,
@@ -12,17 +12,15 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import { Button } from "@/components/ui/button";
 import { AppearanceSettings } from "@/features/settings";
-import {
-  applyAppearance,
-  applyFontFamily,
-  defaultSettings,
-} from "@/lib/appearance";
-import { loadAppSettings } from "@/lib/settings";
+import { type AppSettings } from "@/lib/appearance";
+import { updateAppSettings, useWindowSettings } from "@/lib/settings";
 
 import "./OptionsWindow.css";
 
 export function OptionsWindow() {
   const [isMaximized, setIsMaximized] = useState(false);
+  const settings = useWindowSettings();
+  const readySignaled = useRef(false);
 
   useEffect(() => {
     void getCurrentWindow().isMaximized().then(setIsMaximized);
@@ -53,34 +51,32 @@ export function OptionsWindow() {
   }, []);
 
   useEffect(() => {
+    if (!settings || readySignaled.current) {
+      return;
+    }
+
     let active = true;
 
-    void loadAppSettings()
-      .then((settings) => {
-        applyAppearance(settings.appearance);
-        applyFontFamily(settings.fontFamily);
-      })
-      .catch(() => {
-        applyAppearance(defaultSettings.appearance);
-        applyFontFamily(defaultSettings.fontFamily);
-      })
-      .finally(() => {
-        void document.fonts.ready.then(() => {
-          if (active) {
-            void invoke("options_window_ready");
-          }
-        });
-      });
+    void document.fonts.ready.then(() => {
+      if (active && !readySignaled.current) {
+        readySignaled.current = true;
+        void invoke("options_window_ready");
+      }
+    });
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [settings]);
 
   async function toggleMaximize() {
     const appWindow = getCurrentWindow();
     await appWindow.toggleMaximize();
     setIsMaximized(await appWindow.isMaximized());
+  }
+
+  function handleSettingsChange(nextSettings: AppSettings) {
+    void updateAppSettings(nextSettings).catch(() => undefined);
   }
 
   return (
@@ -137,7 +133,12 @@ export function OptionsWindow() {
             外观
           </Button>
         </nav>
-        <AppearanceSettings />
+        {settings && (
+          <AppearanceSettings
+            settings={settings}
+            onSettingsChange={handleSettingsChange}
+          />
+        )}
       </div>
     </main>
   );

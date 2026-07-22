@@ -135,6 +135,25 @@
   font-weight: 600;
 }
 
+.settings-field-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.font-loading-indicator {
+  width: 14px;
+  height: 14px;
+  color: var(--muted-foreground);
+  animation: font-loading-spin 800ms linear infinite;
+}
+
+@keyframes font-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .appearance-options {
   max-width: 100%;
   margin-left: auto;
