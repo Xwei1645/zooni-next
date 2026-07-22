@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { LoaderCircle, Monitor, Moon, Sun } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import {
   type AppSettings,
   type FontFamily,
@@ -31,12 +32,9 @@ export function AppearanceSettings({
   const [systemFonts, setSystemFonts] = useState<string[]>([]);
   const [fontsLoading, setFontsLoading] = useState(true);
   const [backgroundOpacity, setBackgroundOpacity] = useState(settings.backgroundOpacity);
-  const adjustingOpacity = useRef(false);
 
   useEffect(() => {
-    if (!adjustingOpacity.current) {
-      setBackgroundOpacity(settings.backgroundOpacity);
-    }
+    setBackgroundOpacity(settings.backgroundOpacity);
   }, [settings.backgroundOpacity]);
 
   useEffect(() => {
@@ -170,27 +168,16 @@ export function AppearanceSettings({
           <p>调整主窗口背景的不透明程度。</p>
         </div>
         <div className="opacity-control">
-          <input
+          <Slider
             className="opacity-slider"
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            value={backgroundOpacity}
+            min={0}
+            max={100}
+            step={1}
+            value={[backgroundOpacity]}
             aria-label="主窗口背景不透明度"
             aria-valuetext={`${backgroundOpacity}%`}
-            style={{ "--opacity-progress": `${backgroundOpacity}%` } as CSSProperties}
-            onPointerDown={() => {
-              adjustingOpacity.current = true;
-            }}
-            onPointerUp={() => {
-              adjustingOpacity.current = false;
-            }}
-            onPointerCancel={() => {
-              adjustingOpacity.current = false;
-            }}
-            onChange={(event) => {
-              const value = Number(event.target.value);
+            onValueChange={(values) => {
+              const value = Array.isArray(values) ? values[0] : values;
               setBackgroundOpacity(value);
               onSettingsChange({ ...settings, backgroundOpacity: value });
             }}
