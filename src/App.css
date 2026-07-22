@@ -95,7 +95,28 @@ button {
   margin-right: 5px;
 }
 
+.window-drag-handle {
+  position: fixed;
+  bottom: 5px;
+  left: 50%;
+  width: 30%;
+  height: 5px;
+  border-radius: 999px;
+  background: #b8b8b8;
+  cursor: grab;
+  transform: translateX(-50%);
+  z-index: 9999;
+}
+
+.window-drag-handle:active {
+  cursor: grabbing;
+}
+
 @media (prefers-color-scheme: dark) {
+  .window-drag-handle {
+    background: #838383;
+  }
+
   :root {
     color: #f6f6f6;
     background-color: #2f2f2f;

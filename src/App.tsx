@@ -14,6 +14,7 @@ function App() {
 
   return (
     <main className="container">
+      <div className="window-drag-handle" data-tauri-drag-region></div>
       <h1>Welcome to Tauri + React</h1>
 
       <div className="row">
