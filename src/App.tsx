@@ -81,6 +81,7 @@ function App() {
   const mainWindowShown = useRef(false);
   const backgroundOpacity = settings?.backgroundOpacity;
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreenTransitioning, setIsFullscreenTransitioning] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [zoom, setZoom] = useState(100);
   const [columnCount, setColumnCount] = useState(3);
@@ -100,6 +101,7 @@ function App() {
   const isCollapsedRef = useRef(false);
   const isFullscreenRef = useRef(false);
   const isWindowTransitioning = useRef(false);
+  const isFullscreenTransitioningRef = useRef(false);
   const windowState = useRef<MainWindowState>({});
 
   useEffect(() => {
@@ -205,12 +207,7 @@ function App() {
 
     const exitFullscreen = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        void getCurrentWindow()
-          .setFullscreen(false)
-          .then(() => {
-            isFullscreenRef.current = false;
-            setIsFullscreen(false);
-          });
+        void toggleFullscreen();
       }
     };
 
@@ -219,12 +216,61 @@ function App() {
   }, [isFullscreen]);
 
   async function toggleFullscreen() {
+    if (!isTauri() || isFullscreenTransitioningRef.current) {
+      return;
+    }
+
     const appWindow = getCurrentWindow();
     const nextFullscreen = !isFullscreen;
+    isFullscreenTransitioningRef.current = true;
+    setIsFullscreenTransitioning(true);
 
-    await appWindow.setFullscreen(nextFullscreen);
-    isFullscreenRef.current = nextFullscreen;
-    setIsFullscreen(nextFullscreen);
+    try {
+      if (nextFullscreen) {
+        const [position, size] = await Promise.all([
+          appWindow.outerPosition(),
+          appWindow.outerSize(),
+        ]);
+        const monitor = await monitorFromPoint(position.x, position.y);
+        const normalBounds = windowBounds(position, size);
+        const nextState = { ...windowState.current, normalBounds };
+        windowState.current = nextState;
+        void updateMainWindowState(nextState).catch(() => undefined);
+
+        // Suppress geometry persistence while expanding toward the fullscreen target.
+        isFullscreenRef.current = true;
+        if (monitor) {
+          await animateWindowBounds(
+            appWindow,
+            position,
+            size,
+            monitor.workArea.position,
+            monitor.workArea.size,
+          );
+        }
+      }
+
+      await appWindow.setFullscreen(nextFullscreen);
+
+      if (!nextFullscreen) {
+        const bounds = windowState.current.normalBounds;
+
+        if (bounds) {
+          await appWindow.setSize(new PhysicalSize(bounds.width, bounds.height));
+          await appWindow.setPosition(new PhysicalPosition(bounds.x, bounds.y));
+        }
+      }
+
+      isFullscreenRef.current = nextFullscreen;
+      setIsFullscreen(nextFullscreen);
+    } catch {
+      isFullscreenRef.current = isFullscreen;
+    } finally {
+      window.requestAnimationFrame(() => {
+        isFullscreenTransitioningRef.current = false;
+        setIsFullscreenTransitioning(false);
+      });
+    }
   }
 
   async function collapseWindow() {
@@ -398,7 +444,15 @@ function App() {
   }
 
   return (
-    <main className={isCollapsed ? "app-collapsed" : undefined}>
+    <main
+      className={
+        isCollapsed
+          ? "app-collapsed"
+          : isFullscreenTransitioning
+            ? "app-fullscreen-transition"
+            : undefined
+      }
+    >
       {isCollapsed ? (
         <button
           type="button"

@@ -84,13 +84,14 @@ impl MainWindowState {
 
     pub fn restore_main_window(&self, app: &AppHandle) -> tauri::Result<()> {
         let state = self.snapshot().unwrap_or_default();
-        let Some(bounds) = state.normal_bounds else {
-            return Ok(());
-        };
         let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) else {
             return Ok(());
         };
 
+        window.set_fullscreen(false)?;
+        let Some(bounds) = state.normal_bounds else {
+            return Ok(());
+        };
         window.set_size(PhysicalSize::new(bounds.width, bounds.height))?;
         window.set_position(PhysicalPosition::new(bounds.x, bounds.y))
     }
