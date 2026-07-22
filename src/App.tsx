@@ -106,6 +106,7 @@ function App() {
                   variant="ghost"
                   size="icon-xs"
                   aria-label="缩小界面"
+                  disabled={zoom <= 50}
                   onClick={() => setZoom((value) => Math.max(50, value - 10))}
                 >
                   <Minus aria-hidden="true" />
@@ -116,6 +117,7 @@ function App() {
                   variant="ghost"
                   size="icon-xs"
                   aria-label="放大界面"
+                  disabled={zoom >= 200}
                   onClick={() => setZoom((value) => Math.min(200, value + 10))}
                 >
                   <Plus aria-hidden="true" />
@@ -130,6 +132,7 @@ function App() {
                   variant="ghost"
                   size="icon-xs"
                   aria-label="减少作业列数"
+                  disabled={columnCount <= 1}
                   onClick={() =>
                     setColumnCount((value) => Math.max(1, value - 1))
                   }
@@ -142,6 +145,7 @@ function App() {
                   variant="ghost"
                   size="icon-xs"
                   aria-label="增加作业列数"
+                  disabled={columnCount >= 10}
                   onClick={() =>
                     setColumnCount((value) => Math.min(10, value + 1))
                   }
