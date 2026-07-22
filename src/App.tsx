@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   BookOpen,
   Ellipsis,
-  LockOpen,
   LogOut,
+  Maximize,
   Menu,
+  Minimize,
   Minus,
   PanelTopClose,
   Plus,
@@ -32,6 +33,7 @@ function App() {
   const settings = useWindowSettings();
   const mainWindowShown = useRef(false);
   const backgroundOpacity = settings?.backgroundOpacity;
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoom, setZoom] = useState(100);
   const [columnCount, setColumnCount] = useState(3);
 
@@ -49,6 +51,20 @@ function App() {
     mainWindowShown.current = true;
     void getCurrentWindow().show().catch(() => undefined);
   }, [settings]);
+
+  useEffect(() => {
+    if (isTauri()) {
+      void getCurrentWindow().isFullscreen().then(setIsFullscreen);
+    }
+  }, []);
+
+  async function toggleFullscreen() {
+    const appWindow = getCurrentWindow();
+    const nextFullscreen = !isFullscreen;
+
+    await appWindow.setFullscreen(nextFullscreen);
+    setIsFullscreen(nextFullscreen);
+  }
 
   return (
     <main>
@@ -98,9 +114,13 @@ function App() {
               <Tags aria-hidden="true" />
               标签
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <LockOpen aria-hidden="true" />
-              解锁
+            <DropdownMenuItem onClick={() => void toggleFullscreen()}>
+              {isFullscreen ? (
+                <Minimize aria-hidden="true" />
+              ) : (
+                <Maximize aria-hidden="true" />
+              )}
+              {isFullscreen ? "恢复" : "全屏"}
             </DropdownMenuItem>
             <DropdownMenuItem>
               <PanelTopClose aria-hidden="true" />
