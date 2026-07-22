@@ -33,7 +33,7 @@ import {
   type WindowBounds,
   updateMainWindowState,
 } from "@/lib/window-state";
-import { openOptionsWindow } from "@/lib/windows";
+import { exitApp, openOptionsWindow } from "@/lib/windows";
 
 import "./App.css";
 
@@ -594,7 +594,11 @@ function App() {
                 </Button>
               </div>
             </div>
-            <DropdownMenuItem variant="destructive" className="menu-wide">
+            <DropdownMenuItem
+              variant="destructive"
+              className="menu-wide"
+              onClick={() => void exitApp()}
+            >
               <LogOut aria-hidden="true" />
               退出...
             </DropdownMenuItem>

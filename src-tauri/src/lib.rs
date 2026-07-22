@@ -5,6 +5,11 @@ mod windows;
 
 use tauri::Manager;
 
+#[tauri::command]
+fn exit_app(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -23,6 +28,7 @@ pub fn run() {
             settings::update_app_settings,
             window_state::get_main_window_state,
             window_state::update_main_window_state,
+            exit_app,
             windows::open_options_window,
             windows::options_window_ready,
             windows::hide_options_window
