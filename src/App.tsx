@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import {
   BookOpen,
+  ChevronLeft,
   Ellipsis,
   LogOut,
   Maximize,
   Menu,
   Minimize,
   Minus,
-  PanelTopClose,
+  PanelRightClose,
   Plus,
   Tags,
 } from "lucide-react";
 import { isTauri } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { PhysicalPosition, PhysicalSize } from "@tauri-apps/api/dpi";
+import { getCurrentWindow, monitorFromPoint } from "@tauri-apps/api/window";
 
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -25,17 +27,80 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { applyWindowBackgroundOpacity } from "@/lib/appearance";
 import { useWindowSettings } from "@/lib/settings";
+import {
+  loadMainWindowState,
+  type MainWindowState,
+  type WindowBounds,
+  updateMainWindowState,
+} from "@/lib/window-state";
 import { openOptionsWindow } from "@/lib/windows";
 
 import "./App.css";
+
+const COLLAPSED_WIDTH = 24;
+const COLLAPSED_HEIGHT = 96;
+const WINDOW_TRANSITION_DURATION = 280;
+
+function windowBounds(position: PhysicalPosition, size: PhysicalSize): WindowBounds {
+  return { x: position.x, y: position.y, width: size.width, height: size.height };
+}
+
+async function animateWindowBounds(
+  appWindow: ReturnType<typeof getCurrentWindow>,
+  fromPosition: PhysicalPosition,
+  fromSize: PhysicalSize,
+  toPosition: PhysicalPosition,
+  toSize: PhysicalSize,
+) {
+  const startedAt = performance.now();
+  let progress = 0;
+
+  while (progress < 1) {
+    const elapsed = performance.now() - startedAt;
+    progress = Math.min(elapsed / WINDOW_TRANSITION_DURATION, 1);
+    const easedProgress = 1 - (1 - progress) ** 3;
+    const position = new PhysicalPosition(
+      Math.round(fromPosition.x + (toPosition.x - fromPosition.x) * easedProgress),
+      Math.round(fromPosition.y + (toPosition.y - fromPosition.y) * easedProgress),
+    );
+    const size = new PhysicalSize(
+      Math.round(fromSize.width + (toSize.width - fromSize.width) * easedProgress),
+      Math.round(fromSize.height + (toSize.height - fromSize.height) * easedProgress),
+    );
+
+    await Promise.all([appWindow.setPosition(position), appWindow.setSize(size)]);
+
+    if (progress < 1) {
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+    }
+  }
+}
 
 function App() {
   const settings = useWindowSettings();
   const mainWindowShown = useRef(false);
   const backgroundOpacity = settings?.backgroundOpacity;
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [zoom, setZoom] = useState(100);
   const [columnCount, setColumnCount] = useState(3);
+  const collapsedTab = useRef<{
+    x: number;
+    y: number;
+    minY: number;
+    maxY: number;
+  } | undefined>(undefined);
+  const tabDrag = useRef<{
+    pointerY: number;
+    startY: number;
+    moved: boolean;
+  } | undefined>(undefined);
+  const tabWasDragged = useRef(false);
+  const lastCollapsedTabY = useRef<number | undefined>(undefined);
+  const isCollapsedRef = useRef(false);
+  const isFullscreenRef = useRef(false);
+  const isWindowTransitioning = useRef(false);
+  const windowState = useRef<MainWindowState>({});
 
   useEffect(() => {
     if (backgroundOpacity !== undefined) {
@@ -54,8 +119,83 @@ function App() {
 
   useEffect(() => {
     if (isTauri()) {
-      void getCurrentWindow().isFullscreen().then(setIsFullscreen);
+      void getCurrentWindow().isFullscreen().then((fullscreen) => {
+        isFullscreenRef.current = fullscreen;
+        setIsFullscreen(fullscreen);
+      });
     }
+  }, []);
+
+  useEffect(() => {
+    if (!isTauri()) {
+      return;
+    }
+
+    void loadMainWindowState()
+      .then((state) => {
+        windowState.current = state;
+        lastCollapsedTabY.current = state.collapsedY;
+      })
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    if (!isTauri()) {
+      return;
+    }
+
+    let active = true;
+    let timeout: number | undefined;
+    let unlistenMoved: (() => void) | undefined;
+    let unlistenResized: (() => void) | undefined;
+
+    const persistNormalBounds = () => {
+      if (isCollapsedRef.current || isFullscreenRef.current) {
+        return;
+      }
+
+      window.clearTimeout(timeout);
+      timeout = window.setTimeout(() => {
+        const appWindow = getCurrentWindow();
+
+        void Promise.all([appWindow.outerPosition(), appWindow.outerSize()]).then(
+          ([position, size]) => {
+            if (!active || isCollapsedRef.current || isFullscreenRef.current) {
+              return;
+            }
+
+            const nextState = {
+              ...windowState.current,
+              normalBounds: windowBounds(position, size),
+            };
+            windowState.current = nextState;
+            void updateMainWindowState(nextState).catch(() => undefined);
+          },
+        );
+      }, 150);
+    };
+
+    void getCurrentWindow().onMoved(persistNormalBounds).then((cleanup) => {
+      if (active) {
+        unlistenMoved = cleanup;
+      } else {
+        cleanup();
+      }
+    });
+    void getCurrentWindow().onResized(persistNormalBounds).then((cleanup) => {
+      if (active) {
+        unlistenResized = cleanup;
+      } else {
+        cleanup();
+      }
+    });
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+      unlistenMoved?.();
+      unlistenResized?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -67,7 +207,10 @@ function App() {
       if (event.key === "Escape") {
         void getCurrentWindow()
           .setFullscreen(false)
-          .then(() => setIsFullscreen(false));
+          .then(() => {
+            isFullscreenRef.current = false;
+            setIsFullscreen(false);
+          });
       }
     };
 
@@ -80,15 +223,201 @@ function App() {
     const nextFullscreen = !isFullscreen;
 
     await appWindow.setFullscreen(nextFullscreen);
+    isFullscreenRef.current = nextFullscreen;
     setIsFullscreen(nextFullscreen);
   }
 
+  async function collapseWindow() {
+    if (!isTauri() || isCollapsed || isWindowTransitioning.current) {
+      return;
+    }
+
+    const appWindow = getCurrentWindow();
+    isWindowTransitioning.current = true;
+
+    try {
+      if (isFullscreen) {
+        await appWindow.setFullscreen(false);
+        isFullscreenRef.current = false;
+        setIsFullscreen(false);
+      }
+
+      const [position, size] = await Promise.all([
+        appWindow.outerPosition(),
+        appWindow.outerSize(),
+      ]);
+      const monitor = await monitorFromPoint(position.x, position.y);
+
+      if (!monitor) {
+        return;
+      }
+
+      const normalBounds = windowBounds(position, size);
+
+      const minY = monitor.workArea.position.y;
+      const maxY = monitor.workArea.position.y + monitor.workArea.size.height - COLLAPSED_HEIGHT;
+      const defaultY = minY + Math.round((monitor.workArea.size.height - COLLAPSED_HEIGHT) / 2);
+      const collapsedPosition = new PhysicalPosition(
+        monitor.workArea.position.x + monitor.workArea.size.width - COLLAPSED_WIDTH,
+        Math.min(maxY, Math.max(minY, lastCollapsedTabY.current ?? defaultY)),
+      );
+      collapsedTab.current = {
+        x: collapsedPosition.x,
+        y: collapsedPosition.y,
+        minY,
+        maxY,
+      };
+      lastCollapsedTabY.current = collapsedPosition.y;
+      const nextState = {
+        ...windowState.current,
+        normalBounds,
+        collapsedY: collapsedPosition.y,
+      };
+      windowState.current = nextState;
+
+      isCollapsedRef.current = true;
+      await appWindow.setResizable(false);
+      await appWindow.setAlwaysOnTop(true);
+      await animateWindowBounds(
+        appWindow,
+        position,
+        size,
+        collapsedPosition,
+        new PhysicalSize(COLLAPSED_WIDTH, COLLAPSED_HEIGHT),
+      );
+      setIsCollapsed(true);
+      void updateMainWindowState(nextState).catch(() => undefined);
+    } catch {
+      isCollapsedRef.current = false;
+    } finally {
+      isWindowTransitioning.current = false;
+    }
+  }
+
+  async function restoreWindow() {
+    const bounds = windowState.current.normalBounds;
+
+    if (!bounds) {
+      return;
+    }
+
+    if (isWindowTransitioning.current) {
+      return;
+    }
+
+    try {
+      const appWindow = getCurrentWindow();
+      isWindowTransitioning.current = true;
+      const [position, size] = await Promise.all([
+        appWindow.outerPosition(),
+        appWindow.outerSize(),
+      ]);
+      setIsCollapsed(false);
+      await animateWindowBounds(
+        appWindow,
+        position,
+        size,
+        new PhysicalPosition(bounds.x, bounds.y),
+        new PhysicalSize(bounds.width, bounds.height),
+      );
+      await appWindow.setResizable(true);
+      await appWindow.setAlwaysOnTop(false);
+      isCollapsedRef.current = false;
+      collapsedTab.current = undefined;
+    } catch {
+      // Keep the side tab available when restoration fails.
+      isCollapsedRef.current = true;
+      setIsCollapsed(true);
+    } finally {
+      isWindowTransitioning.current = false;
+    }
+  }
+
+  function startTabDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    const tab = collapsedTab.current;
+
+    if (!tab) {
+      return;
+    }
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    tabWasDragged.current = false;
+    tabDrag.current = {
+      pointerY: event.screenY * window.devicePixelRatio,
+      startY: tab.y,
+      moved: false,
+    };
+  }
+
+  function moveTab(event: React.PointerEvent<HTMLButtonElement>) {
+    const tab = collapsedTab.current;
+    const drag = tabDrag.current;
+
+    if (!tab || !drag) {
+      return;
+    }
+
+    const y = Math.min(
+      tab.maxY,
+      Math.max(
+        tab.minY,
+        drag.startY + event.screenY * window.devicePixelRatio - drag.pointerY,
+      ),
+    );
+
+    if (Math.abs(y - drag.startY) > 3) {
+      drag.moved = true;
+    }
+
+    tab.y = y;
+    lastCollapsedTabY.current = y;
+    void getCurrentWindow()
+      .setPosition(new PhysicalPosition(tab.x, y))
+      .catch(() => undefined);
+  }
+
+  function endTabDrag() {
+    const drag = tabDrag.current;
+    tabDrag.current = undefined;
+    tabWasDragged.current = drag?.moved ?? false;
+
+    if (drag?.moved) {
+      const nextState = { ...windowState.current, collapsedY: lastCollapsedTabY.current };
+      windowState.current = nextState;
+      void updateMainWindowState(nextState).catch(() => undefined);
+    }
+  }
+
+  function restoreFromTabClick() {
+    if (tabWasDragged.current) {
+      tabWasDragged.current = false;
+      return;
+    }
+
+    void restoreWindow();
+  }
+
   return (
-    <main>
-      {!isFullscreen && (
-        <div className="window-drag-handle" data-tauri-drag-region></div>
-      )}
-      <DropdownMenu>
+    <main className={isCollapsed ? "app-collapsed" : undefined}>
+      {isCollapsed ? (
+        <button
+          type="button"
+          className="collapsed-side-tab"
+          aria-label="恢复窗口"
+          onPointerDown={startTabDrag}
+          onPointerMove={moveTab}
+          onPointerUp={endTabDrag}
+          onPointerCancel={endTabDrag}
+          onClick={restoreFromTabClick}
+        >
+          <ChevronLeft aria-hidden="true" />
+        </button>
+      ) : (
+        <>
+          {!isFullscreen && (
+            <div className="window-drag-handle" data-tauri-drag-region></div>
+          )}
+          <DropdownMenu>
         <ButtonGroup className="toolbar" role="toolbar" aria-label="页面工具栏">
           <Button
             type="button"
@@ -141,8 +470,8 @@ function App() {
               )}
               {isFullscreen ? "恢复" : "全屏"}
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <PanelTopClose aria-hidden="true" />
+            <DropdownMenuItem onClick={() => void collapseWindow()}>
+              <PanelRightClose aria-hidden="true" />
               收起
             </DropdownMenuItem>
             <div className="menu-control">
@@ -207,7 +536,9 @@ function App() {
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
-      </DropdownMenu>
+          </DropdownMenu>
+        </>
+      )}
     </main>
   );
 }

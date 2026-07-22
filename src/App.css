@@ -16,6 +16,46 @@
   cursor: grabbing;
 }
 
+.app-collapsed {
+  min-height: 100vh;
+  background: color-mix(in oklch, var(--background) 35%, transparent);
+}
+
+.collapsed-side-tab {
+  display: grid;
+  width: 100vw;
+  height: 100vh;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  color: color-mix(in oklch, var(--foreground) 60%, transparent);
+  background: color-mix(in oklch, var(--background) 35%, transparent);
+  cursor: pointer;
+  touch-action: none;
+  animation: collapsed-side-tab-in 120ms ease-out;
+}
+
+.collapsed-side-tab:hover {
+  color: var(--foreground);
+  background: color-mix(in oklch, var(--background) 60%, transparent);
+}
+
+.collapsed-side-tab svg {
+  width: 14px;
+  height: 14px;
+  transform: translateX(-3px);
+}
+
+@keyframes collapsed-side-tab-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 .toolbar {
   position: fixed;
   right: 16px;
