@@ -6,6 +6,8 @@ import App from "./App";
 import "./index.css";
 import { OptionsWindow } from "./windows/OptionsWindow";
 
+window.addEventListener("contextmenu", (event) => event.preventDefault());
+
 const Root = isTauri() && getCurrentWindow().label === "options" ? OptionsWindow : App;
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
