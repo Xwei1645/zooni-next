@@ -82,7 +82,11 @@ export function OptionsWindow() {
   return (
     <main className="options-window">
       <header className="options-titlebar">
-        <div className="options-drag-region" data-tauri-drag-region>
+        <div
+          className="options-drag-region"
+          data-tauri-drag-region
+          onDoubleClick={() => void toggleMaximize()}
+        >
           <Settings2 aria-hidden="true" />
           <span>Zooni Next 选项</span>
         </div>
