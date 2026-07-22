@@ -252,6 +252,14 @@
   text-align: right;
 }
 
+.settings-window-animation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+
 @media (max-width: 640px) {
   .settings-panel {
     padding: 24px 20px;

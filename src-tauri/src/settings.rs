@@ -12,6 +12,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 const SETTINGS_FILE_NAME: &str = "settings.json";
 const PERSIST_DELAY: Duration = Duration::from_millis(500);
 const DEFAULT_BACKGROUND_OPACITY: u8 = 100;
+const DEFAULT_WINDOW_ANIMATION: bool = true;
 
 #[derive(Clone, Copy, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -28,6 +29,8 @@ pub struct AppSettings {
     font_family: String,
     #[serde(default = "default_background_opacity")]
     background_opacity: u8,
+    #[serde(default = "default_window_animation")]
+    window_animation: bool,
 }
 
 impl AppSettings {
@@ -42,12 +45,17 @@ impl Default for AppSettings {
             appearance: Appearance::System,
             font_family: "__default__".into(),
             background_opacity: DEFAULT_BACKGROUND_OPACITY,
+            window_animation: DEFAULT_WINDOW_ANIMATION,
         }
     }
 }
 
 fn default_background_opacity() -> u8 {
     DEFAULT_BACKGROUND_OPACITY
+}
+
+fn default_window_animation() -> bool {
+    DEFAULT_WINDOW_ANIMATION
 }
 
 #[derive(Clone, Serialize)]
@@ -226,5 +234,6 @@ mod tests {
                 .expect("existing settings should remain valid");
 
         assert_eq!(settings.background_opacity, 100);
+        assert!(settings.window_animation);
     }
 }

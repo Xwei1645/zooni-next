@@ -7,12 +7,14 @@ export interface AppSettings {
   appearance: Appearance;
   fontFamily: FontFamily;
   backgroundOpacity: number;
+  windowAnimation: boolean;
 }
 
 export const defaultSettings: AppSettings = {
   appearance: "system",
   fontFamily: DEFAULT_FONT_FAMILY,
   backgroundOpacity: 100,
+  windowAnimation: true,
 };
 
 const DEFAULT_FONT_STACK =

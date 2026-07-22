@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { Switch } from "@/components/ui/switch";
 import {
   type AppSettings,
   type FontFamily,
@@ -196,6 +197,22 @@ export function AppearanceSettings({
           />
           <output className="opacity-value">{backgroundOpacity}%</output>
         </div>
+      </div>
+      <div className="settings-section settings-window-animation-row">
+        <div className="settings-field-heading">
+          <h3>窗口缩放动画</h3>
+          <p>控制主窗口全屏和收起时的是否显示缩放动画。</p>
+        </div>
+        <Switch
+          checked={settings.windowAnimation}
+          aria-label="窗口缩放动画"
+          onCheckedChange={() =>
+            onSettingsChange({
+              ...settings,
+              windowAnimation: !settings.windowAnimation,
+            })
+          }
+        />
       </div>
     </section>
   );

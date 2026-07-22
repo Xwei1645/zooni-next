@@ -51,7 +51,13 @@ async function animateWindowBounds(
   fromSize: PhysicalSize,
   toPosition: PhysicalPosition,
   toSize: PhysicalSize,
+  enabled: boolean,
 ) {
+  if (!enabled) {
+    await Promise.all([appWindow.setPosition(toPosition), appWindow.setSize(toSize)]);
+    return;
+  }
+
   const startedAt = performance.now();
   let progress = 0;
 
@@ -80,6 +86,7 @@ function App() {
   const settings = useWindowSettings();
   const mainWindowShown = useRef(false);
   const backgroundOpacity = settings?.backgroundOpacity;
+  const windowAnimation = settings?.windowAnimation ?? true;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isFullscreenTransitioning, setIsFullscreenTransitioning] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -246,6 +253,7 @@ function App() {
             size,
             monitor.workArea.position,
             monitor.workArea.size,
+            windowAnimation,
           );
         }
       }
@@ -330,6 +338,7 @@ function App() {
         size,
         collapsedPosition,
         new PhysicalSize(COLLAPSED_WIDTH, COLLAPSED_HEIGHT),
+        windowAnimation,
       );
       setIsCollapsed(true);
       void updateMainWindowState(nextState).catch(() => undefined);
@@ -365,6 +374,7 @@ function App() {
         size,
         new PhysicalPosition(bounds.x, bounds.y),
         new PhysicalSize(bounds.width, bounds.height),
+        windowAnimation,
       );
       await appWindow.setResizable(true);
       await appWindow.setAlwaysOnTop(false);
@@ -448,7 +458,7 @@ function App() {
       className={
         isCollapsed
           ? "app-collapsed"
-          : isFullscreenTransitioning
+          : isFullscreenTransitioning && windowAnimation
             ? "app-fullscreen-transition"
             : undefined
       }
