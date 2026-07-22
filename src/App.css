@@ -1,15 +1,3 @@
-:root {
-  background-color: #f6f6f6;
-}
-
-html,
-body,
-#root {
-  min-height: 100%;
-  margin: 0;
-  background-color: #f6f6f6;
-}
-
 .window-drag-handle {
   position: fixed;
   bottom: 5px;
@@ -17,7 +5,8 @@ body,
   width: 30%;
   height: 5px;
   border-radius: 999px;
-  background: #b8b8b8;
+  background: var(--muted-foreground);
+  opacity: 0.55;
   cursor: grab;
   transform: translateX(-50%);
   z-index: 9999;
@@ -75,18 +64,4 @@ body,
   display: grid;
   grid-template-columns: 24px 56px 24px;
   align-items: center;
-}
-
-@media (prefers-color-scheme: dark) {
-
-  :root,
-  html,
-  body,
-  #root {
-    background-color: #2f2f2f;
-  }
-
-  .window-drag-handle {
-    background: #838383;
-  }
 }

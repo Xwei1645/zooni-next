@@ -1,0 +1,41 @@
+export type Appearance = "system" | "light" | "dark";
+export type FontFamily = string;
+
+export const DEFAULT_FONT_FAMILY = "__default__";
+
+export interface AppSettings {
+  appearance: Appearance;
+  fontFamily: FontFamily;
+}
+
+export const defaultSettings: AppSettings = {
+  appearance: "system",
+  fontFamily: DEFAULT_FONT_FAMILY,
+};
+
+const DEFAULT_FONT_STACK =
+  '"Inter Variable", "Noto Sans CJK SC", "Noto Sans CJK TC", "Noto Sans", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Yu Gothic", "Malgun Gothic", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+const SYSTEM_FONT_FALLBACK =
+  '"Noto Sans CJK SC", "Noto Sans CJK TC", "Noto Sans", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Yu Gothic", "Malgun Gothic", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+export function applyAppearance(
+  appearance: Appearance,
+  prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches,
+) {
+  const isDark = appearance === "dark" || (appearance === "system" && prefersDark);
+  document.documentElement.classList.toggle("dark", isDark);
+}
+
+export function fontFamilyStack(fontFamily: FontFamily) {
+  return fontFamily === DEFAULT_FONT_FAMILY
+    ? DEFAULT_FONT_STACK
+    : `${JSON.stringify(fontFamily)}, ${SYSTEM_FONT_FALLBACK}`;
+}
+
+export function applyFontFamily(fontFamily: FontFamily) {
+  document.documentElement.style.setProperty(
+    "--app-font-sans",
+    fontFamilyStack(fontFamily),
+  );
+}
