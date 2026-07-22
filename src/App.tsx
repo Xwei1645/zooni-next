@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BookOpen,
   Ellipsis,
@@ -10,6 +10,8 @@ import {
   Plus,
   Tags,
 } from "lucide-react";
+import { isTauri } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -26,9 +28,19 @@ import { openOptionsWindow } from "@/lib/windows";
 import "./App.css";
 
 function App() {
-  useWindowSettings();
+  const settings = useWindowSettings();
+  const mainWindowShown = useRef(false);
   const [zoom, setZoom] = useState(100);
   const [columnCount, setColumnCount] = useState(3);
+
+  useEffect(() => {
+    if (!isTauri() || !settings || mainWindowShown.current) {
+      return;
+    }
+
+    mainWindowShown.current = true;
+    void getCurrentWindow().show().catch(() => undefined);
+  }, [settings]);
 
   return (
     <main>
