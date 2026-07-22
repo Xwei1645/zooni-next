@@ -58,6 +58,23 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!isTauri() || !isFullscreen) {
+      return;
+    }
+
+    const exitFullscreen = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        void getCurrentWindow()
+          .setFullscreen(false)
+          .then(() => setIsFullscreen(false));
+      }
+    };
+
+    window.addEventListener("keydown", exitFullscreen);
+    return () => window.removeEventListener("keydown", exitFullscreen);
+  }, [isFullscreen]);
+
   async function toggleFullscreen() {
     const appWindow = getCurrentWindow();
     const nextFullscreen = !isFullscreen;
@@ -68,7 +85,9 @@ function App() {
 
   return (
     <main>
-      <div className="window-drag-handle" data-tauri-drag-region></div>
+      {!isFullscreen && (
+        <div className="window-drag-handle" data-tauri-drag-region></div>
+      )}
       <DropdownMenu>
         <ButtonGroup className="toolbar" role="toolbar" aria-label="页面工具栏">
           <Button
