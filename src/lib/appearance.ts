@@ -18,10 +18,10 @@ export const defaultSettings: AppSettings = {
 };
 
 const DEFAULT_FONT_STACK =
-  '"Inter Variable", "Noto Sans CJK SC", "Noto Sans CJK TC", "Noto Sans", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Yu Gothic", "Malgun Gothic", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans CJK TC", "Noto Sans", "Yu Gothic UI", "Yu Gothic", "Malgun Gothic", sans-serif';
 
 const SYSTEM_FONT_FALLBACK =
-  '"Noto Sans CJK SC", "Noto Sans CJK TC", "Noto Sans", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Yu Gothic", "Malgun Gothic", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans CJK TC", "Noto Sans", "Yu Gothic UI", "Yu Gothic", "Malgun Gothic", sans-serif';
 
 export function applyAppearance(
   appearance: Appearance,
