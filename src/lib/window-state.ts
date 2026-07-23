@@ -1,14 +1,22 @@
 import { invoke } from "@tauri-apps/api/core";
 
-export interface WindowBounds {
+export interface WindowPosition {
   x: number;
   y: number;
+}
+
+export interface WindowInnerSize {
   width: number;
   height: number;
 }
 
+export interface WindowPlacement {
+  outerPosition: WindowPosition;
+  innerSize: WindowInnerSize;
+}
+
 export interface MainWindowState {
-  normalBounds?: WindowBounds;
+  normalPlacement?: WindowPlacement;
   collapsedY?: number;
 }
 

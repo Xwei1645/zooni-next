@@ -15,31 +15,43 @@ const MAIN_WINDOW_LABEL: &str = "main";
 
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
-pub struct WindowBounds {
+pub struct WindowPosition {
     x: i32,
     y: i32,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct WindowInnerSize {
     width: u32,
     height: u32,
 }
 
-impl WindowBounds {
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct WindowPlacement {
+    outer_position: WindowPosition,
+    inner_size: WindowInnerSize,
+}
+
+impl WindowPlacement {
     fn is_valid(&self) -> bool {
-        self.width > 0 && self.height > 0
+        self.inner_size.width > 0 && self.inner_size.height > 0
     }
 }
 
 #[derive(Clone, Default, Deserialize, Serialize)]
 #[serde(default, deny_unknown_fields, rename_all = "camelCase")]
 pub struct MainWindowStateData {
-    normal_bounds: Option<WindowBounds>,
+    normal_placement: Option<WindowPlacement>,
     collapsed_y: Option<i32>,
 }
 
 impl MainWindowStateData {
     fn is_valid(&self) -> bool {
-        self.normal_bounds
+        self.normal_placement
             .as_ref()
-            .is_none_or(WindowBounds::is_valid)
+            .is_none_or(WindowPlacement::is_valid)
     }
 }
 
@@ -89,11 +101,17 @@ impl MainWindowState {
         };
 
         window.set_fullscreen(false)?;
-        let Some(bounds) = state.normal_bounds else {
+        let Some(placement) = state.normal_placement else {
             return Ok(());
         };
-        window.set_size(PhysicalSize::new(bounds.width, bounds.height))?;
-        window.set_position(PhysicalPosition::new(bounds.x, bounds.y))
+        window.set_size(PhysicalSize::new(
+            placement.inner_size.width,
+            placement.inner_size.height,
+        ))?;
+        window.set_position(PhysicalPosition::new(
+            placement.outer_position.x,
+            placement.outer_position.y,
+        ))
     }
 
     fn snapshot(&self) -> Result<MainWindowStateData, String> {
@@ -188,9 +206,9 @@ mod tests {
     use super::MainWindowStateData;
 
     #[test]
-    fn rejects_invalid_normal_bounds() {
+    fn rejects_invalid_normal_placement() {
         let state = serde_json::from_str::<MainWindowStateData>(
-            r#"{"normalBounds":{"x":0,"y":0,"width":0,"height":600}}"#,
+            r#"{"normalPlacement":{"outerPosition":{"x":0,"y":0},"innerSize":{"width":0,"height":600}}}"#,
         )
         .expect("state should deserialize before semantic validation");
 

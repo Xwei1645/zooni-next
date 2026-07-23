@@ -30,7 +30,7 @@ import { useWindowSettings } from "@/lib/settings";
 import {
   loadMainWindowState,
   type MainWindowState,
-  type WindowBounds,
+  type WindowPlacement,
   updateMainWindowState,
 } from "@/lib/window-state";
 import { exitApp, openOptionsWindow, openSubjectsWindow } from "@/lib/windows";
@@ -41,20 +41,71 @@ const COLLAPSED_WIDTH = 24;
 const COLLAPSED_HEIGHT = 96;
 const WINDOW_TRANSITION_DURATION = 280;
 
-function windowBounds(position: PhysicalPosition, size: PhysicalSize): WindowBounds {
-  return { x: position.x, y: position.y, width: size.width, height: size.height };
+interface OuterRect {
+  position: PhysicalPosition;
+  size: PhysicalSize;
 }
 
-async function animateWindowBounds(
+interface WindowFrameInsets {
+  width: number;
+  height: number;
+}
+
+function physicalPosition(placement: WindowPlacement) {
+  return new PhysicalPosition(placement.outerPosition.x, placement.outerPosition.y);
+}
+
+function physicalSize(placement: WindowPlacement) {
+  return new PhysicalSize(placement.innerSize.width, placement.innerSize.height);
+}
+
+function windowPlacement(position: PhysicalPosition, size: PhysicalSize): WindowPlacement {
+  return {
+    outerPosition: { x: position.x, y: position.y },
+    innerSize: { width: size.width, height: size.height },
+  };
+}
+
+async function readWindowPlacement(appWindow: ReturnType<typeof getCurrentWindow>) {
+  const [position, size] = await Promise.all([appWindow.outerPosition(), appWindow.innerSize()]);
+  return windowPlacement(position, size);
+}
+
+async function readWindowFrameInsets(appWindow: ReturnType<typeof getCurrentWindow>) {
+  const [outerSize, innerSize] = await Promise.all([appWindow.outerSize(), appWindow.innerSize()]);
+  return {
+    width: Math.max(0, outerSize.width - innerSize.width),
+    height: Math.max(0, outerSize.height - innerSize.height),
+  };
+}
+
+function placementForOuterRect(rect: OuterRect, frameInsets: WindowFrameInsets): WindowPlacement {
+  return windowPlacement(
+    rect.position,
+    new PhysicalSize(
+      Math.max(1, rect.size.width - frameInsets.width),
+      Math.max(1, rect.size.height - frameInsets.height),
+    ),
+  );
+}
+
+async function applyWindowPlacement(
   appWindow: ReturnType<typeof getCurrentWindow>,
-  fromPosition: PhysicalPosition,
-  fromSize: PhysicalSize,
-  toPosition: PhysicalPosition,
-  toSize: PhysicalSize,
+  placement: WindowPlacement,
+) {
+  // A size change can reposition a native window; restore the intended origin afterward.
+  await appWindow.setSize(physicalSize(placement));
+  await appWindow.setPosition(physicalPosition(placement));
+}
+
+async function animateWindowPlacement(
+  appWindow: ReturnType<typeof getCurrentWindow>,
+  from: WindowPlacement,
+  to: WindowPlacement,
   enabled: boolean,
 ) {
   if (!enabled) {
-    await Promise.all([appWindow.setPosition(toPosition), appWindow.setSize(toSize)]);
+    await applyWindowPlacement(appWindow, to);
     return;
   }
 
@@ -65,21 +116,35 @@ async function animateWindowBounds(
     const elapsed = performance.now() - startedAt;
     progress = Math.min(elapsed / WINDOW_TRANSITION_DURATION, 1);
     const easedProgress = 1 - (1 - progress) ** 3;
-    const position = new PhysicalPosition(
-      Math.round(fromPosition.x + (toPosition.x - fromPosition.x) * easedProgress),
-      Math.round(fromPosition.y + (toPosition.y - fromPosition.y) * easedProgress),
-    );
-    const size = new PhysicalSize(
-      Math.round(fromSize.width + (toSize.width - fromSize.width) * easedProgress),
-      Math.round(fromSize.height + (toSize.height - fromSize.height) * easedProgress),
+    const placement = windowPlacement(
+      new PhysicalPosition(
+        Math.round(
+          from.outerPosition.x + (to.outerPosition.x - from.outerPosition.x) * easedProgress,
+        ),
+        Math.round(
+          from.outerPosition.y + (to.outerPosition.y - from.outerPosition.y) * easedProgress,
+        ),
+      ),
+      new PhysicalSize(
+        Math.round(
+          from.innerSize.width + (to.innerSize.width - from.innerSize.width) * easedProgress,
+        ),
+        Math.round(
+          from.innerSize.height + (to.innerSize.height - from.innerSize.height) * easedProgress,
+        ),
+      ),
     );
 
-    await Promise.all([appWindow.setPosition(position), appWindow.setSize(size)]);
+    await applyWindowPlacement(appWindow, placement);
 
     if (progress < 1) {
       await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
     }
   }
+}
+
+function waitForWindowFrame() {
+  return new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
 }
 
 function App() {
@@ -107,8 +172,23 @@ function App() {
   const lastCollapsedTabY = useRef<number | undefined>(undefined);
   const isCollapsedRef = useRef(false);
   const isFullscreenRef = useRef(false);
-  const isWindowTransitioning = useRef(false);
-  const isFullscreenTransitioningRef = useRef(false);
+  const isChangingWindow = useRef(false);
+  const normalPlacementPersistenceVersion = useRef(0);
+  const fullscreenTransition = useRef<
+    | {
+        normal: WindowPlacement;
+        fullscreen: WindowPlacement;
+      }
+    | undefined
+  >(undefined);
+  const collapsedRestoreTarget = useRef<
+    | {
+        placement: WindowPlacement;
+        restoreFullscreen: boolean;
+        fullscreenNormal?: WindowPlacement;
+      }
+    | undefined
+  >(undefined);
   const windowState = useRef<MainWindowState>({});
 
   useEffect(() => {
@@ -158,40 +238,50 @@ function App() {
     let unlistenMoved: (() => void) | undefined;
     let unlistenResized: (() => void) | undefined;
 
-    const persistNormalBounds = () => {
-      if (isCollapsedRef.current || isFullscreenRef.current) {
+    const persistNormalPlacement = () => {
+      if (
+        isCollapsedRef.current ||
+        isFullscreenRef.current ||
+        isChangingWindow.current
+      ) {
         return;
       }
 
+      const persistenceVersion = normalPlacementPersistenceVersion.current;
       window.clearTimeout(timeout);
       timeout = window.setTimeout(() => {
         const appWindow = getCurrentWindow();
 
-        void Promise.all([appWindow.outerPosition(), appWindow.outerSize()]).then(
-          ([position, size]) => {
-            if (!active || isCollapsedRef.current || isFullscreenRef.current) {
+        void readWindowPlacement(appWindow).then((placement) => {
+            if (
+              !active ||
+              persistenceVersion !== normalPlacementPersistenceVersion.current ||
+              isCollapsedRef.current ||
+              isFullscreenRef.current ||
+              isChangingWindow.current
+            ) {
               return;
             }
 
             const nextState = {
               ...windowState.current,
-              normalBounds: windowBounds(position, size),
+              normalPlacement: placement,
             };
             windowState.current = nextState;
             void updateMainWindowState(nextState).catch(() => undefined);
-          },
-        );
+          })
+          .catch(() => undefined);
       }, 150);
     };
 
-    void getCurrentWindow().onMoved(persistNormalBounds).then((cleanup) => {
+    void getCurrentWindow().onMoved(persistNormalPlacement).then((cleanup) => {
       if (active) {
         unlistenMoved = cleanup;
       } else {
         cleanup();
       }
     });
-    void getCurrentWindow().onResized(persistNormalBounds).then((cleanup) => {
+    void getCurrentWindow().onResized(persistNormalPlacement).then((cleanup) => {
       if (active) {
         unlistenResized = cleanup;
       } else {
@@ -223,90 +313,116 @@ function App() {
   }, [isFullscreen]);
 
   async function toggleFullscreen() {
-    if (!isTauri() || isFullscreenTransitioningRef.current) {
+    if (!isTauri() || isChangingWindow.current) {
       return;
     }
 
     const appWindow = getCurrentWindow();
-    const nextFullscreen = !isFullscreen;
-    isFullscreenTransitioningRef.current = true;
+    const nextFullscreen = !isFullscreenRef.current;
+    isChangingWindow.current = true;
+    normalPlacementPersistenceVersion.current += 1;
     setIsFullscreenTransitioning(true);
 
     try {
-      if (nextFullscreen) {
-        const [position, size] = await Promise.all([
-          appWindow.outerPosition(),
-          appWindow.outerSize(),
-        ]);
-        const monitor = await monitorFromPoint(position.x, position.y);
-        const normalBounds = windowBounds(position, size);
-        const nextState = { ...windowState.current, normalBounds };
-        windowState.current = nextState;
-        void updateMainWindowState(nextState).catch(() => undefined);
-
-        // Suppress geometry persistence while expanding toward the fullscreen target.
+      if (!windowAnimation) {
+        await appWindow.setFullscreen(nextFullscreen);
+        if (!nextFullscreen && fullscreenTransition.current) {
+          await waitForWindowFrame();
+          await applyWindowPlacement(appWindow, fullscreenTransition.current.normal);
+        }
+        fullscreenTransition.current = undefined;
+      } else if (nextFullscreen) {
         isFullscreenRef.current = true;
+
+        const normal = await readWindowPlacement(appWindow);
+        const monitor = await monitorFromPoint(
+          normal.outerPosition.x,
+          normal.outerPosition.y,
+        );
+
         if (monitor) {
-          await animateWindowBounds(
-            appWindow,
-            position,
-            size,
-            monitor.workArea.position,
-            monitor.workArea.size,
-            windowAnimation,
+          const frameInsets = await readWindowFrameInsets(appWindow);
+          const fullscreen = placementForOuterRect(
+            {
+              position: monitor.workArea.position,
+              size: monitor.workArea.size,
+            },
+            frameInsets,
           );
+          fullscreenTransition.current = { normal, fullscreen };
+          await animateWindowPlacement(
+            appWindow,
+            normal,
+            fullscreen,
+            true,
+          );
+        } else {
+          fullscreenTransition.current = undefined;
         }
-      }
 
-      await appWindow.setFullscreen(nextFullscreen);
+        await appWindow.setFullscreen(true);
+      } else {
+        const transition = fullscreenTransition.current;
+        const fullscreen = transition?.fullscreen ?? await readWindowPlacement(appWindow);
+        await appWindow.setFullscreen(false);
+        await waitForWindowFrame();
 
-      if (!nextFullscreen) {
-        const bounds = windowState.current.normalBounds;
-
-        if (bounds) {
-          await appWindow.setSize(new PhysicalSize(bounds.width, bounds.height));
-          await appWindow.setPosition(new PhysicalPosition(bounds.x, bounds.y));
-        }
+        const normal = transition?.normal ?? await readWindowPlacement(appWindow);
+        await animateWindowPlacement(appWindow, fullscreen, normal, true);
+        fullscreenTransition.current = undefined;
       }
 
       isFullscreenRef.current = nextFullscreen;
       setIsFullscreen(nextFullscreen);
-    } catch {
-      isFullscreenRef.current = isFullscreen;
+    } catch (error) {
+      console.error("Fullscreen transition failed", error);
+      const fullscreen = await appWindow
+        .isFullscreen()
+        .catch(() => isFullscreenRef.current);
+      isFullscreenRef.current = fullscreen;
+      setIsFullscreen(fullscreen);
     } finally {
       window.requestAnimationFrame(() => {
-        isFullscreenTransitioningRef.current = false;
+        isChangingWindow.current = false;
         setIsFullscreenTransitioning(false);
       });
     }
   }
 
   async function collapseWindow() {
-    if (!isTauri() || isCollapsed || isWindowTransitioning.current) {
+    if (!isTauri() || isCollapsed || isChangingWindow.current) {
       return;
     }
 
     const appWindow = getCurrentWindow();
-    isWindowTransitioning.current = true;
+    const restoreFullscreen = isFullscreenRef.current;
+    isChangingWindow.current = true;
+    normalPlacementPersistenceVersion.current += 1;
 
     try {
-      if (isFullscreen) {
+      let placement: WindowPlacement;
+      let fullscreenNormal: WindowPlacement | undefined;
+
+      if (restoreFullscreen) {
         await appWindow.setFullscreen(false);
+        await waitForWindowFrame();
+        placement = await readWindowPlacement(appWindow);
+        fullscreenNormal = fullscreenTransition.current?.normal ?? placement;
+        fullscreenTransition.current = undefined;
         isFullscreenRef.current = false;
         setIsFullscreen(false);
+      } else {
+        placement = await readWindowPlacement(appWindow);
       }
 
-      const [position, size] = await Promise.all([
-        appWindow.outerPosition(),
-        appWindow.outerSize(),
-      ]);
-      const monitor = await monitorFromPoint(position.x, position.y);
+      const monitor = await monitorFromPoint(
+        placement.outerPosition.x,
+        placement.outerPosition.y,
+      );
 
       if (!monitor) {
         return;
       }
-
-      const normalBounds = windowBounds(position, size);
 
       const minY = monitor.workArea.position.y;
       const maxY = monitor.workArea.position.y + monitor.workArea.size.height - COLLAPSED_HEIGHT;
@@ -315,6 +431,10 @@ function App() {
         monitor.workArea.position.x + monitor.workArea.size.width - COLLAPSED_WIDTH,
         Math.min(maxY, Math.max(minY, lastCollapsedTabY.current ?? defaultY)),
       );
+      const collapsed = windowPlacement(
+        collapsedPosition,
+        new PhysicalSize(COLLAPSED_WIDTH, COLLAPSED_HEIGHT),
+      );
       collapsedTab.current = {
         x: collapsedPosition.x,
         y: collapsedPosition.y,
@@ -322,70 +442,73 @@ function App() {
         maxY,
       };
       lastCollapsedTabY.current = collapsedPosition.y;
-      const nextState = {
-        ...windowState.current,
-        normalBounds,
-        collapsedY: collapsedPosition.y,
+      collapsedRestoreTarget.current = {
+        placement,
+        restoreFullscreen,
+        fullscreenNormal,
       };
-      windowState.current = nextState;
 
       isCollapsedRef.current = true;
-      await appWindow.setResizable(false);
       await appWindow.setAlwaysOnTop(true);
-      await animateWindowBounds(
-        appWindow,
-        position,
-        size,
-        collapsedPosition,
-        new PhysicalSize(COLLAPSED_WIDTH, COLLAPSED_HEIGHT),
-        windowAnimation,
-      );
+      await appWindow.setResizable(false);
+      await animateWindowPlacement(appWindow, placement, collapsed, windowAnimation);
       setIsCollapsed(true);
-      void updateMainWindowState(nextState).catch(() => undefined);
-    } catch {
+      if (!restoreFullscreen) {
+        const nextState = {
+          ...windowState.current,
+          normalPlacement: placement,
+          collapsedY: collapsedPosition.y,
+        };
+        windowState.current = nextState;
+        void updateMainWindowState(nextState).catch(() => undefined);
+      }
+    } catch (error) {
+      console.error("Window collapse failed", error);
       isCollapsedRef.current = false;
     } finally {
-      isWindowTransitioning.current = false;
+      window.requestAnimationFrame(() => {
+        isChangingWindow.current = false;
+      });
     }
   }
 
   async function restoreWindow() {
-    const bounds = windowState.current.normalBounds;
+    const target = collapsedRestoreTarget.current;
 
-    if (!bounds) {
+    if (!target || isChangingWindow.current) {
       return;
     }
 
-    if (isWindowTransitioning.current) {
-      return;
-    }
-
+    const appWindow = getCurrentWindow();
+    isChangingWindow.current = true;
+    normalPlacementPersistenceVersion.current += 1;
     try {
-      const appWindow = getCurrentWindow();
-      isWindowTransitioning.current = true;
-      const [position, size] = await Promise.all([
-        appWindow.outerPosition(),
-        appWindow.outerSize(),
-      ]);
+      const collapsed = await readWindowPlacement(appWindow);
       setIsCollapsed(false);
-      await animateWindowBounds(
-        appWindow,
-        position,
-        size,
-        new PhysicalPosition(bounds.x, bounds.y),
-        new PhysicalSize(bounds.width, bounds.height),
-        windowAnimation,
-      );
+      await animateWindowPlacement(appWindow, collapsed, target.placement, windowAnimation);
       await appWindow.setResizable(true);
       await appWindow.setAlwaysOnTop(false);
       isCollapsedRef.current = false;
       collapsedTab.current = undefined;
-    } catch {
+      if (target.restoreFullscreen) {
+        await appWindow.setFullscreen(true);
+        isFullscreenRef.current = true;
+        setIsFullscreen(true);
+        fullscreenTransition.current = {
+          normal: target.fullscreenNormal ?? target.placement,
+          fullscreen: target.placement,
+        };
+      }
+      collapsedRestoreTarget.current = undefined;
+    } catch (error) {
+      console.error("Window restore failed", error);
       // Keep the side tab available when restoration fails.
       isCollapsedRef.current = true;
       setIsCollapsed(true);
     } finally {
-      isWindowTransitioning.current = false;
+      window.requestAnimationFrame(() => {
+        isChangingWindow.current = false;
+      });
     }
   }
 
