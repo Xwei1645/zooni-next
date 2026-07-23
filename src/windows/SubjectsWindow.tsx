@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, Check, Grip, Pencil, Plus, Trash2, X } from "lucide-react";
+import { BookOpen, BookX, Check, Grip, Pencil, Plus, Trash2, X } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
@@ -26,6 +26,7 @@ export function SubjectsWindow() {
   const [editingName, setEditingName] = useState("");
   const [deletingId, setDeletingId] = useState<string>();
   const [createdSubject, setCreatedSubject] = useState<Subject>();
+  const [emptyLeaving, setEmptyLeaving] = useState(false);
   const readySignaled = useRef(false);
   const { subjects, loaded } = useSubjects();
   const settings = useWindowSettings();
@@ -86,8 +87,16 @@ export function SubjectsWindow() {
   function startCreating() {
     setEditingId(undefined);
     setCreatedSubject(undefined);
-    setCreating(true);
     setCreateName("");
+    if (visibleSubjects.length === 0) {
+      setEmptyLeaving(true);
+      window.setTimeout(() => {
+        setEmptyLeaving(false);
+        setCreating(true);
+      }, ROW_ANIMATION_DURATION);
+    } else {
+      setCreating(true);
+    }
   }
 
   function saveNewSubject() {
@@ -95,15 +104,18 @@ export function SubjectsWindow() {
       return;
     }
 
+    setCreatedSubject({ id: "", name: createName });
+    setCreating(false);
+
     void createSubject({ name: createName }).then((nextSubjects) => {
       const nextSubject = nextSubjects[0];
 
       if (!nextSubject) {
+        setCreatedSubject(undefined);
         return;
       }
 
       setCreatedSubject(nextSubject);
-      setCreating(false);
       window.setTimeout(() => {
         setCreatedSubject(undefined);
         setCreateName("");
@@ -139,9 +151,12 @@ export function SubjectsWindow() {
     void getCurrentWindow().startDragging().catch(() => undefined);
   }
 
-  const visibleSubjects = createdSubject
-    ? subjects.filter((subject) => subject.id !== createdSubject.id)
-    : subjects;
+  const visibleSubjects = subjects.filter((subject) => {
+    if (!createdSubject) return true;
+    if (createdSubject.id && subject.id === createdSubject.id) return false;
+    if (!createdSubject.id && subject.name === createdSubject.name) return false;
+    return true;
+  });
 
   return (
     <main className="subjects-window">
@@ -232,6 +247,12 @@ export function SubjectsWindow() {
               </div>
             </div>
           )}
+          {(visibleSubjects.length === 0 && !creating && !createdSubject) || emptyLeaving ? (
+            <div className={"subjects-empty" + (emptyLeaving ? " subjects-empty-leave" : "")}>
+              <BookX aria-hidden="true" />
+              <span>暂无科目</span>
+            </div>
+          ) : null}
           {visibleSubjects.map((subject) => {
               const isEditing = editingId === subject.id;
               const rowClassName = deletingId === subject.id
@@ -254,7 +275,7 @@ export function SubjectsWindow() {
                         size="icon-xs"
                         className="subject-action-button"
                         aria-label="修改科目"
-                        disabled={deletingId !== undefined}
+                        disabled={deletingId === subject.id}
                         onClick={() => startEditing(subject.id, subject.name)}
                       >
                         <Pencil aria-hidden="true" />
@@ -265,7 +286,7 @@ export function SubjectsWindow() {
                         size="icon-xs"
                         className="subject-action-button"
                         aria-label="删除科目"
-                        disabled={deletingId !== undefined}
+                        disabled={deletingId === subject.id}
                         onClick={() => removeSubject(subject.id)}
                       >
                         <Trash2 aria-hidden="true" />
