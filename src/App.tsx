@@ -485,7 +485,7 @@ function App() {
         <ButtonGroup className="toolbar" role="toolbar" aria-label="页面工具栏">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="icon-lg"
             aria-label="添加"
           >
@@ -495,7 +495,7 @@ function App() {
             render={
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="icon-lg"
                 aria-label="菜单"
               />

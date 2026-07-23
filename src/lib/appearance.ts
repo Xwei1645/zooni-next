@@ -45,8 +45,15 @@ export function applyFontFamily(fontFamily: FontFamily) {
 }
 
 export function applyWindowBackgroundOpacity(backgroundOpacity: number) {
+  const windowOpacity = Math.min(Math.max(backgroundOpacity, 0), 100);
+  const toolbarOpacity = Math.min(windowOpacity + 15, 100);
+
   document.documentElement.style.setProperty(
     "--window-background-opacity",
-    String(backgroundOpacity / 100),
+    String(windowOpacity / 100),
+  );
+  document.documentElement.style.setProperty(
+    "--toolbar-background-opacity",
+    String(toolbarOpacity / 100),
   );
 }

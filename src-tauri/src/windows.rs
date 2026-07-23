@@ -129,7 +129,11 @@ pub fn open_subjects_window(
         show_subjects_window(&app, should_position)?;
 
         if should_position {
-            state.0.lock().map_err(|error| error.to_string())?.positioned = true;
+            state
+                .0
+                .lock()
+                .map_err(|error| error.to_string())?
+                .positioned = true;
         }
     }
 
@@ -151,7 +155,11 @@ pub fn subjects_window_ready(
         show_subjects_window(&app, should_position)?;
 
         if should_position {
-            state.0.lock().map_err(|error| error.to_string())?.positioned = true;
+            state
+                .0
+                .lock()
+                .map_err(|error| error.to_string())?
+                .positioned = true;
         }
     }
 
@@ -202,15 +210,21 @@ fn show_subjects_window(app: &AppHandle, should_position: bool) -> Result<(), St
         let main_window = app
             .get_webview_window(MAIN_WINDOW_LABEL)
             .ok_or_else(|| "Main window is unavailable".to_string())?;
-        let main_position = main_window.outer_position().map_err(|error| error.to_string())?;
-        let main_size = main_window.outer_size().map_err(|error| error.to_string())?;
+        let main_position = main_window
+            .outer_position()
+            .map_err(|error| error.to_string())?;
+        let main_size = main_window
+            .outer_size()
+            .map_err(|error| error.to_string())?;
         let window_size = window.outer_size().map_err(|error| error.to_string())?;
         let position = tauri::PhysicalPosition::new(
             main_position.x + (main_size.width as i32 - window_size.width as i32) / 2,
             main_position.y + (main_size.height as i32 - window_size.height as i32) / 2,
         );
 
-        window.set_position(position).map_err(|error| error.to_string())?;
+        window
+            .set_position(position)
+            .map_err(|error| error.to_string())?;
     }
 
     window.show().map_err(|error| error.to_string())?;

@@ -85,10 +85,13 @@ impl SubjectState {
     fn create(&self, input: SubjectInput) -> Result<(Vec<Subject>, u64), String> {
         validate_name(&input.name)?;
         let mut snapshot = self.0.snapshot.lock().map_err(|error| error.to_string())?;
-        snapshot.subjects.insert(0, Subject {
-            id: Uuid::new_v4().to_string(),
-            name: input.name,
-        });
+        snapshot.subjects.insert(
+            0,
+            Subject {
+                id: Uuid::new_v4().to_string(),
+                name: input.name,
+            },
+        );
         snapshot.revision += 1;
         Ok((snapshot.subjects.clone(), snapshot.revision))
     }

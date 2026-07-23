@@ -75,6 +75,25 @@
   right: 16px;
   bottom: 16px;
   z-index: 10000;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--foreground) 12%, transparent);
+  border-radius: calc(var(--radius) * 2.6);
+  background: color-mix(
+    in oklch,
+    color-mix(in oklch, var(--background) 94%, var(--foreground)) calc(var(--toolbar-background-opacity) * 100%),
+    transparent
+  );
+  backdrop-filter: blur(12px);
+}
+
+.toolbar > * {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.toolbar > * + * {
+  border-inline-start: 1px solid color-mix(in oklch, var(--foreground) 12%, transparent) !important;
 }
 
 .menu-content[data-slot="dropdown-menu-content"] {
