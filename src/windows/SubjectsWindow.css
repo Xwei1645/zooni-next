@@ -1,0 +1,259 @@
+.subjects-window {
+  display: flex;
+  height: 100vh;
+  min-height: 100vh;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+.subjects-titlebar {
+  display: flex;
+  flex: 0 0 40px;
+  min-height: 40px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-left: 12px;
+}
+
+.subjects-drag-region {
+  display: flex;
+  height: 40px;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.subjects-drag-region svg {
+  width: 15px;
+  height: 15px;
+  color: var(--muted-foreground);
+}
+
+.subjects-content {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.subjects-scroll-area {
+  min-height: 0;
+  flex: 1;
+}
+
+.subjects-scroll-area [data-slot="scroll-area-viewport"] {
+  padding: 12px 12px 8px;
+}
+
+.subjects-scroll-area [data-slot="scroll-area-scrollbar"][data-orientation="vertical"] {
+  top: 8px;
+  right: 3px;
+  bottom: 8px;
+  width: 8px;
+}
+
+.subjects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.subject-row {
+  display: grid;
+  height: 40px;
+  min-height: 40px;
+  overflow: hidden;
+  padding: 2px 6px 2px 12px;
+  transition:
+    background-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.subject-row-is-editing {
+  background: var(--muted);
+}
+
+.subject-row-display,
+.subject-row-editor {
+  grid-area: 1 / 1;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.subject-row-display {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear;
+}
+
+.subject-row-editor {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 150ms;
+}
+
+.subject-row-is-editing .subject-row-display {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 150ms cubic-bezier(0.4, 0, 1, 1),
+    transform 150ms cubic-bezier(0.4, 0, 1, 1),
+    visibility 0s linear 150ms;
+}
+
+.subject-row-is-editing .subject-row-editor {
+  visibility: visible;
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear;
+}
+
+.subject-row-creating {
+  animation: subject-row-insert 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.subject-row-editor .subject-name-input {
+  flex: 1;
+}
+
+.subject-row-deleting {
+  animation: subject-row-remove 150ms cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+
+.subject-name-input {
+  height: 32px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.subject-name-input:hover,
+.subject-name-input:focus-visible {
+  border-color: transparent;
+  background: var(--background);
+  box-shadow: none;
+}
+
+.subject-name {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre-wrap;
+}
+
+.subject-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+.subject-action-button {
+  width: 32px;
+  height: 32px;
+  box-shadow: none;
+}
+
+.subject-action-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.subject-action-button:hover:not(:disabled) {
+  background: var(--muted);
+  box-shadow: none;
+}
+
+.subjects-footer {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding: 12px;
+}
+
+.subjects-footer > button {
+  border: 0;
+}
+
+.subjects-drag-button,
+.subjects-close-button {
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.subjects-drag-button {
+  color: var(--muted-foreground);
+}
+
+.subject-add-button {
+  flex: 1;
+}
+
+.subjects-close-button {
+  color: var(--destructive);
+  background: color-mix(in oklch, var(--destructive), transparent 92%);
+}
+
+.subjects-close-button:hover {
+  color: var(--destructive);
+  background: color-mix(in oklch, var(--destructive), transparent 84%);
+}
+
+@keyframes subject-row-insert {
+  from {
+    height: 0;
+    min-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+  }
+
+  to {
+    height: 40px;
+    min-height: 40px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    opacity: 1;
+  }
+}
+
+@keyframes subject-row-remove {
+  from {
+    height: 40px;
+    min-height: 40px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    opacity: 1;
+  }
+
+  to {
+    height: 0;
+    min-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+  }
+}

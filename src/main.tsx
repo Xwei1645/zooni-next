@@ -5,10 +5,13 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import App from "./App";
 import "./index.css";
 import { OptionsWindow } from "./windows/OptionsWindow";
+import { SubjectsWindow } from "./windows/SubjectsWindow";
 
 window.addEventListener("contextmenu", (event) => event.preventDefault());
 
-const Root = isTauri() && getCurrentWindow().label === "options" ? OptionsWindow : App;
+const windowLabel = isTauri() ? getCurrentWindow().label : "main";
+const Root =
+  windowLabel === "options" ? OptionsWindow : windowLabel === "subjects" ? SubjectsWindow : App;
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

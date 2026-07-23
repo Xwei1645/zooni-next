@@ -33,7 +33,7 @@ import {
   type WindowBounds,
   updateMainWindowState,
 } from "@/lib/window-state";
-import { exitApp, openOptionsWindow } from "@/lib/windows";
+import { exitApp, openOptionsWindow, openSubjectsWindow } from "@/lib/windows";
 
 import "./App.css";
 
@@ -518,7 +518,7 @@ function App() {
               <Ellipsis aria-hidden="true" />
               更多选项...
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void openSubjectsWindow()}>
               <BookOpen aria-hidden="true" />
               科目
             </DropdownMenuItem>
