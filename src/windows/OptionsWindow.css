@@ -98,8 +98,12 @@
   height: 16px;
 }
 
+.settings-panel-scroll-area {
+  min-height: 0;
+  background: var(--background);
+}
+
 .settings-panel {
-  overflow-y: auto;
   background: var(--background);
   padding: 28px 32px;
 }

@@ -17,6 +17,7 @@ import {
 } from "@lexical/selection";
 
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -264,7 +265,7 @@ export function AssignmentComposer({
           }}
         >
           <TextToolbar />
-          <div className="assignment-editor-body">
+          <ScrollArea className="assignment-editor-body">
             <RichTextPlugin
               contentEditable={
                 <ContentEditable className="assignment-editor-content" aria-label="正文" />
@@ -272,7 +273,7 @@ export function AssignmentComposer({
               placeholder={null}
               ErrorBoundary={LexicalErrorBoundary}
             />
-          </div>
+          </ScrollArea>
           <EditorCapturePlugin editorRef={editorRef} />
         </LexicalComposer>
         <footer className="assignment-composer-footer">

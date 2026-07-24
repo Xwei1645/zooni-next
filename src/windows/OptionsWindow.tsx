@@ -11,6 +11,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppearanceSettings } from "@/features/settings";
 import { type AppSettings } from "@/lib/appearance";
 import { updateAppSettings, useWindowSettings } from "@/lib/settings";
@@ -137,12 +138,14 @@ export function OptionsWindow() {
             外观
           </Button>
         </nav>
-        {settings && (
-          <AppearanceSettings
-            settings={settings}
-            onSettingsChange={handleSettingsChange}
-          />
-        )}
+        <ScrollArea className="settings-panel-scroll-area">
+          {settings && (
+            <AppearanceSettings
+              settings={settings}
+              onSettingsChange={handleSettingsChange}
+            />
+          )}
+        </ScrollArea>
       </div>
     </main>
   );

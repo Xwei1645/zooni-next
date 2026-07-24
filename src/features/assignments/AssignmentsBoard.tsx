@@ -9,6 +9,7 @@ import "./Assignments.css";
 interface AssignmentsBoardProps {
   assignments: Assignment[];
   columnCount: number;
+  contentZoom: number;
   onCardRef: (id: string, element: HTMLElement | null) => void;
   onDelete: (assignment: Assignment) => void;
   onEdit: (assignment: Assignment) => void;
@@ -30,6 +31,7 @@ interface AssignmentGroup {
 export function AssignmentsBoard({
   assignments,
   columnCount,
+  contentZoom,
   onCardRef,
   onDelete,
   onEdit,
@@ -124,6 +126,7 @@ export function AssignmentsBoard({
               <AssignmentCard
                 assignment={assignment}
                 cardRef={(element) => registerCard(assignment.id, element)}
+                contentZoom={contentZoom}
                 isPopping={assignment.id === poppingAssignmentId}
                 isUpdating={assignment.id === updatingAssignment?.id && updatingAssignment.active}
                 key={assignment.id}

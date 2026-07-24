@@ -52,6 +52,7 @@
     --window-background-opacity: 1;
     --toolbar-background-opacity: 1;
     --card-background-opacity: 1;
+    --assignment-content-zoom: 1;
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);

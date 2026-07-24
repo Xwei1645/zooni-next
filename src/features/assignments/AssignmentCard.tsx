@@ -9,6 +9,7 @@ import { AssignmentContent } from "./AssignmentContent";
 interface AssignmentCardProps {
   assignment: Assignment;
   cardRef?: (element: HTMLElement | null) => void;
+  contentZoom: number;
   isPopping?: boolean;
   onDelete: (assignment: Assignment) => void;
   onEdit: (assignment: Assignment) => void;
@@ -19,6 +20,7 @@ interface AssignmentCardProps {
 export function AssignmentCard({
   assignment,
   cardRef,
+  contentZoom,
   isPopping,
   onDelete,
   onEdit,
@@ -75,7 +77,7 @@ export function AssignmentCard({
     >
       <div className="assignment-card-content-stack">
         <div className="assignment-card-current-content">
-          <AssignmentContent content={assignment.content} />
+          <AssignmentContent content={assignment.content} contentZoom={contentZoom} />
         </div>
         {previousContent !== undefined && (
           <div
@@ -85,7 +87,7 @@ export function AssignmentCard({
                 : "assignment-card-previous-content"
             }
           >
-            <AssignmentContent content={previousContent} />
+            <AssignmentContent content={previousContent} contentZoom={contentZoom} />
           </div>
         )}
       </div>

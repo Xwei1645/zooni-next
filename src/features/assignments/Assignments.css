@@ -5,6 +5,15 @@
   padding: 36px 24px 96px;
 }
 
+.assignments-scroll-area {
+  width: 100vw;
+  height: 100vh;
+}
+
+.assignments-scroll-area [data-slot="scroll-area-viewport"] {
+  overflow: auto;
+}
+
 .assignment-group + .assignment-group {
   margin-top: 36px;
 }
@@ -12,16 +21,19 @@
 .assignment-group-title {
   margin: 0 0 12px;
   color: var(--foreground);
-  font-size: 24px;
+  font-size: calc(24px * var(--assignment-content-zoom));
   font-weight: 700;
   line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .assignment-grid {
   display: grid;
-  grid-template-columns: repeat(var(--assignment-column-count), minmax(12rem, 1fr));
+  grid-template-columns: repeat(var(--assignment-column-count), minmax(0, 1fr));
   gap: 12px;
-  min-width: max(100%, calc(var(--assignment-column-count) * 12rem + (var(--assignment-column-count) - 1) * 12px));
+  min-width: 100%;
 }
 
 .assignment-card {
@@ -46,16 +58,14 @@
 
 .assignment-content {
   box-sizing: border-box;
-  padding: 16px;
   color: var(--card-foreground);
-  font-size: 15px;
   line-height: 1.55;
   outline: none;
   overflow-wrap: anywhere;
 }
 
 .assignment-content p {
-  margin: 0 0 0.75em;
+  margin: 0 0 11.25px;
 }
 
 .assignment-content p:last-child {
@@ -64,6 +74,7 @@
 
 .assignment-card-content-stack {
   position: relative;
+  padding: 16px;
 }
 
 .assignment-card-current-content {
@@ -75,6 +86,8 @@
   position: absolute;
   z-index: 0;
   inset: 0;
+  box-sizing: border-box;
+  padding: 16px;
   background: var(--card);
   pointer-events: none;
 }
@@ -226,7 +239,10 @@
 
 .assignment-editor-body {
   min-height: 0;
-  overflow: auto;
+}
+
+.assignment-editor-body [data-slot="scroll-area-viewport"] {
+  overflow-y: auto;
 }
 
 .assignment-editor-content {

@@ -18,6 +18,7 @@ import { getCurrentWindow, monitorFromPoint } from "@tauri-apps/api/window";
 
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -239,10 +240,13 @@ function App() {
   }, [backgroundOpacity]);
 
   useEffect(() => {
-    document.documentElement.style.setProperty("zoom", `${boardState.zoom}%`);
+    document.documentElement.style.setProperty(
+      "--assignment-content-zoom",
+      String(boardState.zoom / 100),
+    );
 
     return () => {
-      document.documentElement.style.removeProperty("zoom");
+      document.documentElement.style.removeProperty("--assignment-content-zoom");
     };
   }, [boardState.zoom]);
 
@@ -780,16 +784,19 @@ function App() {
           {!isFullscreen && (
             <div className="window-drag-handle" data-tauri-drag-region></div>
           )}
-          <AssignmentsBoard
-            assignments={assignments}
-            columnCount={boardState.columnCount}
-            onCardRef={registerAssignmentCard}
-            onDelete={removeAssignment}
-            onEdit={editAssignment}
-            poppingAssignmentId={poppingAssignmentId}
-            subjects={subjects}
-            updatingAssignment={updatingAssignment}
-          />
+          <ScrollArea className="assignments-scroll-area" horizontal>
+            <AssignmentsBoard
+              assignments={assignments}
+              columnCount={boardState.columnCount}
+              contentZoom={boardState.zoom / 100}
+              onCardRef={registerAssignmentCard}
+              onDelete={removeAssignment}
+              onEdit={editAssignment}
+              poppingAssignmentId={poppingAssignmentId}
+              subjects={subjects}
+              updatingAssignment={updatingAssignment}
+            />
+          </ScrollArea>
           {composer && (
             <AssignmentComposer
               assignment={composer.assignment}
