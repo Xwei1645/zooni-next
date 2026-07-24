@@ -197,6 +197,7 @@ fn show_options_window(app: &AppHandle) -> Result<(), String> {
         .get_webview_window(OPTIONS_WINDOW_LABEL)
         .ok_or_else(|| "Options window is unavailable".to_string())?;
 
+    window.unminimize().ok();
     window.show().map_err(|error| error.to_string())?;
     window.set_focus().map_err(|error| error.to_string())
 }
@@ -227,6 +228,7 @@ fn show_subjects_window(app: &AppHandle, should_position: bool) -> Result<(), St
             .map_err(|error| error.to_string())?;
     }
 
+    window.unminimize().ok();
     window.show().map_err(|error| error.to_string())?;
     window.set_focus().map_err(|error| error.to_string())
 }

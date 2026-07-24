@@ -6,6 +6,7 @@
   "permissions": [
     "core:window:allow-start-dragging",
     "core:window:allow-minimize",
+    "core:window:allow-unminimize",
     "core:window:allow-monitor-from-point",
     "core:window:allow-outer-position",
     "core:window:allow-outer-size",
