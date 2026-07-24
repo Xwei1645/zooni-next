@@ -6,9 +6,11 @@ function ScrollArea({
   className,
   children,
   horizontal = false,
+  verticalScrollbarClassName,
   ...props
 }: ScrollAreaPrimitive.Root.Props & {
   horizontal?: boolean
+  verticalScrollbarClassName?: string
 }) {
   return (
     <ScrollAreaPrimitive.Root
@@ -22,7 +24,7 @@ function ScrollArea({
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      <ScrollBar />
+      <ScrollBar className={verticalScrollbarClassName} />
       {horizontal && <ScrollBar orientation="horizontal" />}
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
@@ -40,7 +42,7 @@ function ScrollBar({
       data-orientation={orientation}
       orientation={orientation}
       className={cn(
-        "flex touch-none transition-colors select-none data-horizontal:h-1.5 data-horizontal:inset-x-5 data-horizontal:flex-col data-horizontal:border-t data-horizontal:border-t-transparent data-vertical:inset-y-5 data-vertical:w-1.5 data-vertical:border-l data-vertical:border-l-transparent",
+        "flex touch-none transition-colors select-none data-horizontal:h-1.5 data-horizontal:inset-x-5 data-horizontal:flex-col data-horizontal:border-t data-horizontal:border-t-transparent data-vertical:inset-y-5 data-vertical:w-2 data-vertical:border-l data-vertical:border-l-transparent",
         className
       )}
       {...props}

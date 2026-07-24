@@ -99,7 +99,12 @@ function SelectContent({
           }}
           {...props}
         >
-          <ScrollArea className="w-full" horizontal style={{ maxHeight }}>
+          <ScrollArea
+            className="w-full"
+            horizontal
+            style={{ maxHeight }}
+            verticalScrollbarClassName="data-vertical:!w-1.5"
+          >
             <SelectPrimitive.List className="min-w-max">{children}</SelectPrimitive.List>
           </ScrollArea>
         </SelectPrimitive.Popup>
