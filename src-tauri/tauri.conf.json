@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "zooni-next",
+  "productName": "Zooni Next",
   "version": "0.1.0",
-  "identifier": "io.github.xwei1645.zooni",
+  "identifier": "io.github.xwei1645.zooni-next",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
