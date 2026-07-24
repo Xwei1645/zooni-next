@@ -1,3 +1,4 @@
+mod assignments;
 mod fonts;
 mod settings;
 mod subjects;
@@ -22,6 +23,7 @@ pub fn run() {
             app.manage(window_state);
             app.manage(settings::AppSettingsState::load(&app.handle()));
             app.manage(subjects::SubjectState::load(&app.handle()));
+            app.manage(assignments::AssignmentState::load(&app.handle()));
             windows::preload_options_window(&app.handle())?;
             windows::preload_subjects_window(&app.handle())?;
             Ok(())
@@ -34,6 +36,10 @@ pub fn run() {
             subjects::create_subject,
             subjects::update_subject,
             subjects::delete_subject,
+            assignments::get_assignments,
+            assignments::create_assignment,
+            assignments::update_assignment,
+            assignments::delete_assignment,
             window_state::get_main_window_state,
             window_state::update_main_window_state,
             exit_app,
