@@ -56,4 +56,8 @@ export function applyWindowBackgroundOpacity(backgroundOpacity: number) {
     "--toolbar-background-opacity",
     String(toolbarOpacity / 100),
   );
+  document.documentElement.style.setProperty(
+    "--card-background-opacity",
+    String(toolbarOpacity / 100),
+  );
 }

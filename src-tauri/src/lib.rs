@@ -1,4 +1,5 @@
 mod assignments;
+mod board_state;
 mod fonts;
 mod settings;
 mod subjects;
@@ -18,6 +19,7 @@ pub fn run() {
         .manage(windows::OptionsWindowState::default())
         .manage(windows::SubjectsWindowState::default())
         .setup(|app| {
+            app.manage(board_state::BoardState::load(&app.handle()));
             let window_state = window_state::MainWindowState::load(&app.handle());
             window_state.restore_main_window(&app.handle())?;
             app.manage(window_state);
@@ -29,6 +31,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            board_state::get_board_state,
+            board_state::update_board_state,
             fonts::list_system_fonts,
             settings::get_app_settings,
             settings::update_app_settings,

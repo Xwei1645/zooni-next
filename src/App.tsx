@@ -26,7 +26,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { applyWindowBackgroundOpacity } from "@/lib/appearance";
+import {
+  clearAssignmentDraft,
+  getAssignmentDraft,
+  saveAssignmentDraft,
+} from "@/lib/assignment-drafts";
+import {
+  createAssignment,
+  deleteAssignment,
+  updateAssignment,
+  useAssignments,
+  type Assignment,
+  type AssignmentInput,
+} from "@/lib/assignments";
+import { useBoardState } from "@/lib/board-state";
 import { useWindowSettings } from "@/lib/settings";
+import { useSubjects } from "@/lib/subjects";
 import {
   loadMainWindowState,
   type MainWindowState,
@@ -34,6 +49,8 @@ import {
   updateMainWindowState,
 } from "@/lib/window-state";
 import { exitApp, openOptionsWindow, openSubjectsWindow } from "@/lib/windows";
+import { AssignmentsBoard } from "@/features/assignments/AssignmentsBoard";
+import { AssignmentComposer } from "@/features/assignments/AssignmentComposer";
 
 import "./App.css";
 
@@ -49,6 +66,23 @@ interface OuterRect {
 interface WindowFrameInsets {
   width: number;
   height: number;
+}
+
+interface AssignmentComposerState {
+  assignment?: Assignment;
+  draft?: AssignmentInput;
+}
+
+interface AssignmentTransition {
+  id: string;
+  previousContent?: string;
+  type: "created" | "updated";
+}
+
+interface UpdatingAssignment {
+  active: boolean;
+  id: string;
+  previousContent: string;
 }
 
 function physicalPosition(placement: WindowPlacement) {
@@ -149,14 +183,18 @@ function waitForWindowFrame() {
 
 function App() {
   const settings = useWindowSettings();
+  const { assignments } = useAssignments();
+  const { boardState, saveBoardState } = useBoardState();
+  const { subjects } = useSubjects();
   const mainWindowShown = useRef(false);
   const backgroundOpacity = settings?.backgroundOpacity;
   const windowAnimation = settings?.windowAnimation ?? true;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isFullscreenTransitioning, setIsFullscreenTransitioning] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [zoom, setZoom] = useState(100);
-  const [columnCount, setColumnCount] = useState(3);
+  const [composer, setComposer] = useState<AssignmentComposerState>();
+  const [poppingAssignmentId, setPoppingAssignmentId] = useState<string>();
+  const [updatingAssignment, setUpdatingAssignment] = useState<UpdatingAssignment>();
   const collapsedTab = useRef<{
     x: number;
     y: number;
@@ -190,12 +228,41 @@ function App() {
     | undefined
   >(undefined);
   const windowState = useRef<MainWindowState>({});
+  const assignmentCards = useRef(new Map<string, HTMLElement>());
+  const deletingAssignmentIds = useRef(new Set<string>());
+  const pendingAssignmentTransition = useRef<AssignmentTransition | undefined>(undefined);
 
   useEffect(() => {
     if (backgroundOpacity !== undefined) {
       applyWindowBackgroundOpacity(backgroundOpacity);
     }
   }, [backgroundOpacity]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty("zoom", `${boardState.zoom}%`);
+
+    return () => {
+      document.documentElement.style.removeProperty("zoom");
+    };
+  }, [boardState.zoom]);
+
+  useEffect(() => {
+    if (!poppingAssignmentId) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setPoppingAssignmentId(undefined), 300);
+    return () => window.clearTimeout(timeout);
+  }, [poppingAssignmentId]);
+
+  useEffect(() => {
+    if (!updatingAssignment?.active) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setUpdatingAssignment(undefined), 360);
+    return () => window.clearTimeout(timeout);
+  }, [updatingAssignment]);
 
   useEffect(() => {
     if (!isTauri() || !settings || mainWindowShown.current) {
@@ -576,15 +643,124 @@ function App() {
     void restoreWindow();
   }
 
+  function registerAssignmentCard(id: string, element: HTMLElement | null) {
+    if (element) {
+      assignmentCards.current.set(id, element);
+    } else {
+      assignmentCards.current.delete(id);
+    }
+  }
+
+  function openNewAssignment() {
+    setComposer({ draft: getAssignmentDraft("new") });
+  }
+
+  function editAssignment(assignment: Assignment) {
+    setComposer({
+      assignment,
+      draft: getAssignmentDraft(assignment.id),
+    });
+  }
+
+  async function saveAssignment(input: AssignmentInput) {
+    if (composer?.assignment) {
+      const existing = composer.assignment;
+      setUpdatingAssignment({
+        active: false,
+        id: existing.id,
+        previousContent: existing.content,
+      });
+
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+
+      try {
+        await updateAssignment(existing.id, input);
+        pendingAssignmentTransition.current = {
+          id: existing.id,
+          previousContent: existing.content,
+          type: "updated",
+        };
+      } catch (error) {
+        setUpdatingAssignment(undefined);
+        throw error;
+      }
+      return;
+    }
+
+    const nextAssignments = await createAssignment(input);
+    const createdAssignment = nextAssignments[0];
+
+    if (!createdAssignment) {
+      throw new Error("Assignment was not created");
+    }
+
+    pendingAssignmentTransition.current = { id: createdAssignment.id, type: "created" };
+  }
+
+  function dismissComposer(draft?: AssignmentInput) {
+    const currentComposer = composer;
+
+    if (!currentComposer) {
+      return;
+    }
+
+    const draftKey = currentComposer.assignment?.id ?? "new";
+    if (draft) {
+      saveAssignmentDraft(draftKey, draft);
+    } else {
+      clearAssignmentDraft(draftKey);
+    }
+
+    const transition = pendingAssignmentTransition.current;
+    pendingAssignmentTransition.current = undefined;
+    setComposer(undefined);
+
+    if (transition?.type === "created") {
+      setPoppingAssignmentId(transition.id);
+    } else if (transition?.type === "updated" && transition.previousContent !== undefined) {
+      setUpdatingAssignment((current) =>
+        current?.id === transition.id
+          ? { ...current, active: true }
+          : {
+              active: true,
+              id: transition.id,
+              previousContent: transition.previousContent ?? "",
+            },
+      );
+    }
+  }
+
+  function removeAssignment(assignment: Assignment) {
+    if (deletingAssignmentIds.current.has(assignment.id)) {
+      return;
+    }
+
+    deletingAssignmentIds.current.add(assignment.id);
+    const card = assignmentCards.current.get(assignment.id);
+    const animation = card?.animate(
+      [
+        { opacity: 1, transform: "translateY(0)" },
+        { opacity: 0, transform: "translateY(4px)" },
+      ],
+      { duration: 160, easing: "ease-out", fill: "forwards" },
+    );
+
+    void (animation?.finished ?? Promise.resolve())
+      .catch(() => undefined)
+      .then(() => deleteAssignment(assignment.id))
+      .catch((error) => console.error("Failed to delete assignment", error))
+      .finally(() => {
+        deletingAssignmentIds.current.delete(assignment.id);
+      });
+  }
+
   return (
     <main
-      className={
-        isCollapsed
-          ? "app-collapsed"
-          : isFullscreenTransitioning && windowAnimation
-            ? "app-fullscreen-transition"
-            : undefined
-      }
+      className={[
+        isCollapsed ? "app-collapsed" : undefined,
+        isFullscreenTransitioning && windowAnimation ? "app-fullscreen-transition" : undefined,
+        composer ? "app-composer-active" : undefined,
+      ].filter(Boolean).join(" ") || undefined}
     >
       {isCollapsed ? (
         <button
@@ -604,6 +780,26 @@ function App() {
           {!isFullscreen && (
             <div className="window-drag-handle" data-tauri-drag-region></div>
           )}
+          <AssignmentsBoard
+            assignments={assignments}
+            columnCount={boardState.columnCount}
+            onCardRef={registerAssignmentCard}
+            onDelete={removeAssignment}
+            onEdit={editAssignment}
+            poppingAssignmentId={poppingAssignmentId}
+            subjects={subjects}
+            updatingAssignment={updatingAssignment}
+          />
+          {composer && (
+            <AssignmentComposer
+              assignment={composer.assignment}
+              draft={composer.draft}
+              key={composer.assignment?.id ?? "new"}
+              subjects={subjects}
+              onDismiss={dismissComposer}
+              onSubmit={saveAssignment}
+            />
+          )}
           <DropdownMenu>
         <ButtonGroup className="toolbar" role="toolbar" aria-label="页面工具栏">
           <Button
@@ -611,6 +807,9 @@ function App() {
             variant="ghost"
             size="icon-lg"
             aria-label="添加"
+            title={subjects.length === 0 ? "需要先创建科目" : "添加作业"}
+            disabled={subjects.length === 0 || Boolean(composer)}
+            onClick={openNewAssignment}
           >
             <Plus aria-hidden="true" />
           </Button>
@@ -669,19 +868,29 @@ function App() {
                   variant="ghost"
                   size="icon-xs"
                   aria-label="缩小界面"
-                  disabled={zoom <= 50}
-                  onClick={() => setZoom((value) => Math.max(50, value - 10))}
+                  disabled={boardState.zoom <= 50}
+                  onClick={() =>
+                    saveBoardState({
+                      ...boardState,
+                      zoom: Math.max(50, boardState.zoom - 10),
+                    })
+                  }
                 >
                   <Minus aria-hidden="true" />
                 </Button>
-                <span className="menu-stepper-value">{zoom}%</span>
+                <span className="menu-stepper-value">{boardState.zoom}%</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-xs"
                   aria-label="放大界面"
-                  disabled={zoom >= 200}
-                  onClick={() => setZoom((value) => Math.min(200, value + 10))}
+                  disabled={boardState.zoom >= 200}
+                  onClick={() =>
+                    saveBoardState({
+                      ...boardState,
+                      zoom: Math.min(200, boardState.zoom + 10),
+                    })
+                  }
                 >
                   <Plus aria-hidden="true" />
                 </Button>
@@ -695,22 +904,28 @@ function App() {
                   variant="ghost"
                   size="icon-xs"
                   aria-label="减少作业列数"
-                  disabled={columnCount <= 1}
+                  disabled={boardState.columnCount <= 1}
                   onClick={() =>
-                    setColumnCount((value) => Math.max(1, value - 1))
+                    saveBoardState({
+                      ...boardState,
+                      columnCount: Math.max(1, boardState.columnCount - 1),
+                    })
                   }
                 >
                   <Minus aria-hidden="true" />
                 </Button>
-                <span className="menu-stepper-value">{columnCount} 列</span>
+                <span className="menu-stepper-value">{boardState.columnCount} 列</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-xs"
                   aria-label="增加作业列数"
-                  disabled={columnCount >= 10}
+                  disabled={boardState.columnCount >= 10}
                   onClick={() =>
-                    setColumnCount((value) => Math.min(10, value + 1))
+                    saveBoardState({
+                      ...boardState,
+                      columnCount: Math.min(10, boardState.columnCount + 1),
+                    })
                   }
                 >
                   <Plus aria-hidden="true" />

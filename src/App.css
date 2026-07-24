@@ -10,6 +10,7 @@
   cursor: grab;
   transform: translateX(-50%);
   z-index: 9999;
+  transition: opacity 180ms ease-out;
 }
 
 .window-drag-handle:active {
@@ -74,7 +75,7 @@
   position: fixed;
   right: 16px;
   bottom: 16px;
-  z-index: 10000;
+  z-index: 12000;
   overflow: hidden;
   border: 1px solid color-mix(in oklch, var(--foreground) 12%, transparent);
   border-radius: calc(var(--radius) * 2.6);
@@ -84,6 +85,12 @@
     transparent
   );
   backdrop-filter: blur(12px);
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+
+.app-composer-active .toolbar,
+.app-composer-active .window-drag-handle {
+  opacity: 0.62;
 }
 
 .toolbar > * {
