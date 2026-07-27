@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   BookOpen,
+  CircleAlert,
   ChevronLeft,
   Ellipsis,
   LogOut,
@@ -15,6 +16,7 @@ import {
 import { isTauri } from "@tauri-apps/api/core";
 import { PhysicalPosition, PhysicalSize } from "@tauri-apps/api/dpi";
 import { getCurrentWindow, monitorFromPoint } from "@tauri-apps/api/window";
+import { Toaster, toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -26,7 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { applyWindowBackgroundOpacity } from "@/lib/appearance";
+import { applyWindowBackgroundOpacity, fontFamilyStack } from "@/lib/appearance";
 import {
   clearAssignmentDraft,
   getAssignmentDraft,
@@ -215,17 +217,17 @@ function App() {
   const normalPlacementPersistenceVersion = useRef(0);
   const fullscreenTransition = useRef<
     | {
-        normal: WindowPlacement;
-        fullscreen: WindowPlacement;
-      }
+      normal: WindowPlacement;
+      fullscreen: WindowPlacement;
+    }
     | undefined
   >(undefined);
   const collapsedRestoreTarget = useRef<
     | {
-        placement: WindowPlacement;
-        restoreFullscreen: boolean;
-        fullscreenNormal?: WindowPlacement;
-      }
+      placement: WindowPlacement;
+      restoreFullscreen: boolean;
+      fullscreenNormal?: WindowPlacement;
+    }
     | undefined
   >(undefined);
   const windowState = useRef<MainWindowState>({});
@@ -325,23 +327,23 @@ function App() {
         const appWindow = getCurrentWindow();
 
         void readWindowPlacement(appWindow).then((placement) => {
-            if (
-              !active ||
-              persistenceVersion !== normalPlacementPersistenceVersion.current ||
-              isCollapsedRef.current ||
-              isFullscreenRef.current ||
-              isChangingWindow.current
-            ) {
-              return;
-            }
+          if (
+            !active ||
+            persistenceVersion !== normalPlacementPersistenceVersion.current ||
+            isCollapsedRef.current ||
+            isFullscreenRef.current ||
+            isChangingWindow.current
+          ) {
+            return;
+          }
 
-            const nextState = {
-              ...windowState.current,
-              normalPlacement: placement,
-            };
-            windowState.current = nextState;
-            void updateMainWindowState(nextState).catch(() => undefined);
-          })
+          const nextState = {
+            ...windowState.current,
+            normalPlacement: placement,
+          };
+          windowState.current = nextState;
+          void updateMainWindowState(nextState).catch(() => undefined);
+        })
           .catch(() => undefined);
       }, 150);
     };
@@ -657,6 +659,30 @@ function App() {
   }
 
   function openNewAssignment() {
+    if (subjects.length === 0) {
+      toast.warning("暂无科目", {
+        id: "no-subjects",
+        icon: <CircleAlert aria-hidden="true" />,
+        description: (
+          <span>
+            你可以在 菜单 →
+            <button
+              type="button"
+              className="toast-link toast-link-warning"
+              onClick={() => {
+                toast.dismiss("no-subjects");
+                void openSubjectsWindow();
+              }}
+            >
+              科目管理
+            </button>
+            中添加科目。
+          </span>
+        ),
+      });
+      return;
+    }
+
     setComposer({ draft: getAssignmentDraft("new") });
   }
 
@@ -727,10 +753,10 @@ function App() {
         current?.id === transition.id
           ? { ...current, active: true }
           : {
-              active: true,
-              id: transition.id,
-              previousContent: transition.previousContent ?? "",
-            },
+            active: true,
+            id: transition.id,
+            previousContent: transition.previousContent ?? "",
+          },
       );
     }
   }
@@ -835,183 +861,191 @@ function App() {
             />
           )}
           <DropdownMenu>
-        <ButtonGroup className="toolbar" role="toolbar" aria-label="页面工具栏">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-lg"
-            aria-label="添加"
-            disabled={subjects.length === 0 || Boolean(composer)}
-            onClick={openNewAssignment}
-          >
-            <Plus aria-hidden="true" />
-          </Button>
-          <DropdownMenuTrigger
-            render={
+            <ButtonGroup className="toolbar" role="toolbar" aria-label="页面工具栏">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-lg"
-                aria-label="菜单"
-              />
-            }
-          >
-            <Menu aria-hidden="true" />
-          </DropdownMenuTrigger>
-        </ButtonGroup>
-        <DropdownMenuContent
-          className="menu-content"
-          align="end"
-          side="top"
-          sideOffset={8}
-        >
-          <DropdownMenuGroup className="menu-grid">
-            <DropdownMenuItem
-              className="menu-wide"
-              onClick={() => void openOptionsWindow()}
+                aria-label="添加"
+                disabled={Boolean(composer)}
+                onClick={openNewAssignment}
+              >
+                <Plus aria-hidden="true" />
+              </Button>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-lg"
+                    aria-label="菜单"
+                  />
+                }
+              >
+                <Menu aria-hidden="true" />
+              </DropdownMenuTrigger>
+            </ButtonGroup>
+            <DropdownMenuContent
+              className="menu-content"
+              align="end"
+              side="top"
+              sideOffset={8}
             >
-              <Ellipsis aria-hidden="true" />
-              更多选项...
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void openSubjectsWindow()}>
-              <BookOpen aria-hidden="true" />
-              科目
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Tags aria-hidden="true" />
-              标签
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void toggleFullscreen()}>
-              {isFullscreen ? (
-                <Minimize aria-hidden="true" />
-              ) : (
-                <Maximize aria-hidden="true" />
-              )}
-              {isFullscreen ? "恢复" : "全屏"}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void collapseWindow()}>
-              <PanelRightClose aria-hidden="true" />
-              收起
-            </DropdownMenuItem>
-            <div className="menu-control menu-control-auto">
-              <span>界面缩放</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                className="menu-auto-button"
-                aria-label="自动计算界面缩放"
-                aria-pressed={boardState.autoZoom}
-                onClick={() =>
-                  saveBoardState({
-                    ...boardState,
-                    autoZoom: !boardState.autoZoom,
-                  })
-                }
-              >
-                A
-              </Button>
-              <div className="menu-stepper" aria-label="界面缩放">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label="缩小界面"
-                  disabled={boardState.autoZoom || boardState.zoom <= 50}
-                  onClick={() =>
-                    saveBoardState({
-                      ...boardState,
-                      zoom: Math.max(50, boardState.zoom - 10),
-                    })
-                  }
+              <DropdownMenuGroup className="menu-grid">
+                <DropdownMenuItem
+                  className="menu-wide"
+                  onClick={() => void openOptionsWindow()}
                 >
-                  <Minus aria-hidden="true" />
-                </Button>
-                <span className="menu-stepper-value">
-                  {boardState.autoZoom ? "自动" : `${boardState.zoom}%`}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label="放大界面"
-                  disabled={boardState.autoZoom || boardState.zoom >= 200}
-                  onClick={() =>
-                    saveBoardState({
-                      ...boardState,
-                      zoom: Math.min(200, boardState.zoom + 10),
-                    })
-                  }
-                >
-                  <Plus aria-hidden="true" />
-                </Button>
-              </div>
-            </div>
-            <div className="menu-control menu-control-auto">
-              <span>作业列数</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                className="menu-auto-button"
-                aria-label="自动计算作业列数"
-                aria-pressed={boardState.autoColumnCount}
-                onClick={() =>
-                  saveBoardState({
-                    ...boardState,
-                    autoColumnCount: !boardState.autoColumnCount,
-                  })
-                }
-              >
-                A
-              </Button>
-              <div className="menu-stepper" aria-label="作业列数">
+                  <Ellipsis aria-hidden="true" />
+                  更多选项...
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void openSubjectsWindow()}>
+                  <BookOpen aria-hidden="true" />
+                  科目
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Tags aria-hidden="true" />
+                  标签
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void toggleFullscreen()}>
+                  {isFullscreen ? (
+                    <Minimize aria-hidden="true" />
+                  ) : (
+                    <Maximize aria-hidden="true" />
+                  )}
+                  {isFullscreen ? "恢复" : "全屏"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void collapseWindow()}>
+                  <PanelRightClose aria-hidden="true" />
+                  收起
+                </DropdownMenuItem>
+                <div className="menu-control menu-control-auto">
+                  <span>界面缩放</span>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-xs"
-                    aria-label="减少作业列数"
-                    disabled={boardState.autoColumnCount || boardState.columnCount <= 1}
+                    className="menu-auto-button"
+                    aria-label="自动计算界面缩放"
+                    aria-pressed={boardState.autoZoom}
                     onClick={() =>
                       saveBoardState({
                         ...boardState,
-                        columnCount: Math.max(1, boardState.columnCount - 1),
+                        autoZoom: !boardState.autoZoom,
                       })
                     }
                   >
-                    <Minus aria-hidden="true" />
+                    A
                   </Button>
-                  <span className="menu-stepper-value">
-                    {boardState.autoColumnCount ? "自动" : `${boardState.columnCount} 列`}
-                  </span>
+                  <div className="menu-stepper" aria-label="界面缩放">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label="缩小界面"
+                      disabled={boardState.autoZoom || boardState.zoom <= 50}
+                      onClick={() =>
+                        saveBoardState({
+                          ...boardState,
+                          zoom: Math.max(50, boardState.zoom - 10),
+                        })
+                      }
+                    >
+                      <Minus aria-hidden="true" />
+                    </Button>
+                    <span className="menu-stepper-value">
+                      {boardState.autoZoom ? "自动" : `${boardState.zoom}%`}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label="放大界面"
+                      disabled={boardState.autoZoom || boardState.zoom >= 200}
+                      onClick={() =>
+                        saveBoardState({
+                          ...boardState,
+                          zoom: Math.min(200, boardState.zoom + 10),
+                        })
+                      }
+                    >
+                      <Plus aria-hidden="true" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="menu-control menu-control-auto">
+                  <span>作业列数</span>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-xs"
-                    aria-label="增加作业列数"
-                    disabled={boardState.autoColumnCount || boardState.columnCount >= 10}
+                    className="menu-auto-button"
+                    aria-label="自动计算作业列数"
+                    aria-pressed={boardState.autoColumnCount}
                     onClick={() =>
                       saveBoardState({
                         ...boardState,
-                        columnCount: Math.min(10, boardState.columnCount + 1),
+                        autoColumnCount: !boardState.autoColumnCount,
                       })
                     }
                   >
-                    <Plus aria-hidden="true" />
+                    A
                   </Button>
-              </div>
-            </div>
-            <DropdownMenuItem
-              variant="destructive"
-              className="menu-wide"
-              onClick={() => void exitApp()}
-            >
-              <LogOut aria-hidden="true" />
-              退出...
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
+                  <div className="menu-stepper" aria-label="作业列数">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label="减少作业列数"
+                      disabled={boardState.autoColumnCount || boardState.columnCount <= 1}
+                      onClick={() =>
+                        saveBoardState({
+                          ...boardState,
+                          columnCount: Math.max(1, boardState.columnCount - 1),
+                        })
+                      }
+                    >
+                      <Minus aria-hidden="true" />
+                    </Button>
+                    <span className="menu-stepper-value">
+                      {boardState.autoColumnCount ? "自动" : `${boardState.columnCount} 列`}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label="增加作业列数"
+                      disabled={boardState.autoColumnCount || boardState.columnCount >= 10}
+                      onClick={() =>
+                        saveBoardState({
+                          ...boardState,
+                          columnCount: Math.min(10, boardState.columnCount + 1),
+                        })
+                      }
+                    >
+                      <Plus aria-hidden="true" />
+                    </Button>
+                  </div>
+                </div>
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="menu-wide"
+                  onClick={() => void exitApp()}
+                >
+                  <LogOut aria-hidden="true" />
+                  退出...
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
           </DropdownMenu>
+          <Toaster
+            className="app-toaster"
+            position="bottom-left"
+            richColors
+            style={{
+              fontFamily: settings ? fontFamilyStack(settings.fontFamily) : undefined,
+            }}
+          />
         </>
       )}
     </main>
