@@ -13,6 +13,7 @@ const SETTINGS_FILE_NAME: &str = "settings.json";
 const PERSIST_DELAY: Duration = Duration::from_millis(500);
 const DEFAULT_BACKGROUND_OPACITY: u8 = 100;
 const DEFAULT_WINDOW_ANIMATION: bool = true;
+const DEFAULT_HIDE_TASKBAR_ICON: bool = true;
 
 #[derive(Clone, Copy, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -31,6 +32,8 @@ pub struct AppSettings {
     background_opacity: u8,
     #[serde(default = "default_window_animation")]
     window_animation: bool,
+    #[serde(default = "default_hide_taskbar_icon")]
+    hide_taskbar_icon: bool,
 }
 
 impl AppSettings {
@@ -46,6 +49,7 @@ impl Default for AppSettings {
             font_family: "__default__".into(),
             background_opacity: DEFAULT_BACKGROUND_OPACITY,
             window_animation: DEFAULT_WINDOW_ANIMATION,
+            hide_taskbar_icon: DEFAULT_HIDE_TASKBAR_ICON,
         }
     }
 }
@@ -56,6 +60,10 @@ fn default_background_opacity() -> u8 {
 
 fn default_window_animation() -> bool {
     DEFAULT_WINDOW_ANIMATION
+}
+
+fn default_hide_taskbar_icon() -> bool {
+    DEFAULT_HIDE_TASKBAR_ICON
 }
 
 #[derive(Clone, Serialize)]
@@ -126,6 +134,11 @@ impl AppSettingsState {
         Ok(snapshot.clone())
     }
 
+    pub fn apply_main_window_taskbar_visibility(&self, app: &AppHandle) -> Result<(), String> {
+        let settings = self.snapshot()?.settings;
+        set_main_window_skip_taskbar(app, settings.hide_taskbar_icon)
+    }
+
     fn schedule_persist(&self, revision: u64) {
         let state = self.clone();
 
@@ -163,6 +176,7 @@ pub fn update_app_settings(
     state: State<'_, AppSettingsState>,
     settings: AppSettings,
 ) -> Result<AppSettingsSnapshot, String> {
+    set_main_window_skip_taskbar(&app, settings.hide_taskbar_icon)?;
     let snapshot = state.update(settings)?;
 
     if let Err(error) = app.emit("settings-changed", snapshot.clone()) {
@@ -171,6 +185,13 @@ pub fn update_app_settings(
 
     state.schedule_persist(snapshot.revision);
     Ok(snapshot)
+}
+
+fn set_main_window_skip_taskbar(app: &AppHandle, skip_taskbar: bool) -> Result<(), String> {
+    app.get_webview_window("main")
+        .ok_or_else(|| "Main window is unavailable".to_string())?
+        .set_skip_taskbar(skip_taskbar)
+        .map_err(|error| error.to_string())
 }
 
 fn load_settings(path: &Path) -> Result<AppSettings, String> {

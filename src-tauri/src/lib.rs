@@ -23,7 +23,9 @@ pub fn run() {
             let window_state = window_state::MainWindowState::load(&app.handle());
             window_state.restore_main_window(&app.handle())?;
             app.manage(window_state);
-            app.manage(settings::AppSettingsState::load(&app.handle()));
+            let settings = settings::AppSettingsState::load(&app.handle());
+            settings.apply_main_window_taskbar_visibility(&app.handle())?;
+            app.manage(settings);
             app.manage(subjects::SubjectState::load(&app.handle()));
             app.manage(assignments::AssignmentState::load(&app.handle()));
             windows::preload_options_window(&app.handle())?;

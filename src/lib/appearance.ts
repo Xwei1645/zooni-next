@@ -8,6 +8,7 @@ export interface AppSettings {
   fontFamily: FontFamily;
   backgroundOpacity: number;
   windowAnimation: boolean;
+  hideTaskbarIcon: boolean;
 }
 
 export const defaultSettings: AppSettings = {
@@ -15,6 +16,7 @@ export const defaultSettings: AppSettings = {
   fontFamily: DEFAULT_FONT_FAMILY,
   backgroundOpacity: 100,
   windowAnimation: true,
+  hideTaskbarIcon: true,
 };
 
 const DEFAULT_FONT_STACK =

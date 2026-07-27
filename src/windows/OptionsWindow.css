@@ -229,7 +229,8 @@
   text-align: right;
 }
 
-.settings-window-animation-row {
+.settings-window-animation-row,
+.settings-taskbar-icon-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
