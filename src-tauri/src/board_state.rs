@@ -6,6 +6,7 @@ use std::{
     time::Duration,
 };
 
+use log::error;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State};
 
@@ -55,7 +56,7 @@ impl BoardState {
         let path = match state_path(app) {
             Ok(path) => Some(path),
             Err(error) => {
-                eprintln!("Failed to resolve board state path: {error}");
+                error!("failed to resolve board state path: {error}");
                 None
             }
         };
@@ -67,7 +68,7 @@ impl BoardState {
 
                 if let Some(path) = path.as_deref() {
                     if let Err(error) = write_state(path, &defaults) {
-                        eprintln!("Failed to write default board state: {error}");
+                        error!("failed to write default board state: {error}");
                     }
                 }
 
@@ -106,7 +107,7 @@ impl BoardState {
             let snapshot = match state.snapshot() {
                 Ok(snapshot) => snapshot,
                 Err(error) => {
-                    eprintln!("Failed to access board state for persistence: {error}");
+                    error!("failed to access board state for persistence: {error}");
                     return;
                 }
             };
@@ -115,7 +116,7 @@ impl BoardState {
             };
 
             if let Err(error) = write_state(path, &snapshot) {
-                eprintln!("Failed to persist board state: {error}");
+                error!("failed to persist board state: {error}");
             }
         });
     }

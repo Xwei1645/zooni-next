@@ -6,6 +6,7 @@ use std::{
     time::Duration,
 };
 
+use log::error;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize, State};
 
@@ -68,7 +69,7 @@ impl MainWindowState {
         let path = match state_path(app) {
             Ok(path) => Some(path),
             Err(error) => {
-                eprintln!("Failed to resolve window state path: {error}");
+                error!("failed to resolve window state path: {error}");
                 None
             }
         };
@@ -81,7 +82,7 @@ impl MainWindowState {
 
                 if let Some(path) = path.as_deref() {
                     if let Err(error) = write_state(path, &defaults) {
-                        eprintln!("Failed to write default window state: {error}");
+                        error!("failed to write default window state: {error}");
                     }
                 }
 
@@ -153,7 +154,7 @@ impl MainWindowState {
             let snapshot = match state.snapshot() {
                 Ok(snapshot) => snapshot,
                 Err(error) => {
-                    eprintln!("Failed to access window state for persistence: {error}");
+                    error!("failed to access window state for persistence: {error}");
                     return;
                 }
             };
@@ -162,7 +163,7 @@ impl MainWindowState {
             };
 
             if let Err(error) = write_state(path, &snapshot) {
-                eprintln!("Failed to persist window state: {error}");
+                error!("failed to persist window state: {error}");
             }
         });
     }

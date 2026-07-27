@@ -16,6 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AboutSettings } from "@/features/settings/AboutSettings";
 import { AppearanceSettings } from "@/features/settings/AppearanceSettings";
 import { type AppSettings } from "@/lib/appearance";
+import { logError } from "@/lib/logger";
 import { updateAppSettings, useWindowSettings } from "@/lib/settings";
 
 import "./OptionsWindow.css";
@@ -80,7 +81,7 @@ export function OptionsWindow() {
   }
 
   function handleSettingsChange(nextSettings: AppSettings) {
-    void updateAppSettings(nextSettings).catch(() => undefined);
+    void updateAppSettings(nextSettings).catch((error) => logError("options.update-settings", error));
   }
 
   return (

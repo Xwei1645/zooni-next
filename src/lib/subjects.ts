@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
+import { logError } from "@/lib/logger";
+
 export interface Subject {
   id: string;
   name: string;
@@ -48,7 +50,8 @@ export function useSubjects() {
             setSubjects(nextSubjects);
           }
         })
-        .catch(() => {
+        .catch((error) => {
+          logError("subjects.load", error);
           if (active) {
             setSubjects([]);
           }
@@ -58,7 +61,7 @@ export function useSubjects() {
             setLoaded(true);
           }
         });
-    });
+    }).catch((error) => logError("subjects.listen", error));
 
     return () => {
       active = false;

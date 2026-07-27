@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Assignment, AssignmentInput } from "@/lib/assignments";
+import { logError } from "@/lib/logger";
 import type { Subject } from "@/lib/subjects";
 
 import { assignmentEditorStateFromContent } from "./AssignmentContent";
@@ -219,7 +220,7 @@ export function AssignmentComposer({
       await onSubmit(editorInput());
       close(() => onDismiss());
     } catch (error) {
-      console.error("Failed to save assignment", error);
+      logError("assignment-composer.save", error);
     } finally {
       setSaving(false);
     }
@@ -258,7 +259,7 @@ export function AssignmentComposer({
           initialConfig={{
             namespace: "assignment-editor",
             editorState: assignmentEditorStateFromContent(initialContent),
-            onError: (error) => console.error("Assignment editor failed", error),
+            onError: (error) => logError("assignment-editor", error),
           }}
         >
           <TextToolbar />

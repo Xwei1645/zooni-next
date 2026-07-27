@@ -8,6 +8,7 @@ use std::{
 };
 
 use chrono::{SecondsFormat, Utc};
+use log::error;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
 use uuid::Uuid;
@@ -52,7 +53,7 @@ impl AssignmentState {
         let path = match assignments_path(app) {
             Ok(path) => Some(path),
             Err(error) => {
-                eprintln!("Failed to resolve assignments path: {error}");
+                error!("failed to resolve assignments path: {error}");
                 None
             }
         };
@@ -64,7 +65,7 @@ impl AssignmentState {
 
                 if let Some(path) = path.as_deref() {
                     if let Err(error) = write_assignments(path, &assignments) {
-                        eprintln!("Failed to write default assignments: {error}");
+                        error!("failed to write default assignments: {error}");
                     }
                 }
 
@@ -147,7 +148,7 @@ impl AssignmentState {
                 Ok(snapshot) if snapshot.revision == revision => snapshot.assignments.clone(),
                 Ok(_) => return,
                 Err(error) => {
-                    eprintln!("Failed to access assignments for persistence: {error}");
+                    error!("failed to access assignments for persistence: {error}");
                     return;
                 }
             };
@@ -156,7 +157,7 @@ impl AssignmentState {
             };
 
             if let Err(error) = write_assignments(path, &assignments) {
-                eprintln!("Failed to persist assignments: {error}");
+                error!("failed to persist assignments: {error}");
             }
         });
     }
@@ -214,7 +215,7 @@ fn validate_input(input: &AssignmentInput) -> Result<(), String> {
 
 fn broadcast_assignments(app: &AppHandle, assignments: &[Assignment]) {
     if let Err(error) = app.emit("assignments-changed", assignments) {
-        eprintln!("Failed to broadcast assignments update: {error}");
+        error!("failed to broadcast assignments update: {error}");
     }
 }
 

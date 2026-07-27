@@ -13,6 +13,7 @@ import {
   updateSubject,
   useSubjects,
 } from "@/lib/subjects";
+import { logError } from "@/lib/logger";
 import { useWindowSettings } from "@/lib/settings";
 
 import "./SubjectsWindow.css";
@@ -107,20 +108,25 @@ export function SubjectsWindow() {
     setCreatedSubject({ id: "", name: createName });
     setCreating(false);
 
-    void createSubject({ name: createName }).then((nextSubjects) => {
-      const nextSubject = nextSubjects[0];
+    void createSubject({ name: createName })
+      .then((nextSubjects) => {
+        const nextSubject = nextSubjects[0];
 
-      if (!nextSubject) {
-        setCreatedSubject(undefined);
-        return;
-      }
+        if (!nextSubject) {
+          setCreatedSubject(undefined);
+          return;
+        }
 
-      setCreatedSubject(nextSubject);
-      window.setTimeout(() => {
+        setCreatedSubject(nextSubject);
+        window.setTimeout(() => {
+          setCreatedSubject(undefined);
+          setCreateName("");
+        }, ROW_ANIMATION_DURATION);
+      })
+      .catch((error) => {
         setCreatedSubject(undefined);
-        setCreateName("");
-      }, ROW_ANIMATION_DURATION);
-    });
+        logError("subjects.create", error);
+      });
   }
 
   function saveSubject(id: string) {
@@ -128,10 +134,12 @@ export function SubjectsWindow() {
       return;
     }
 
-    void updateSubject(id, { name: editingName }).then(() => {
-      setEditingId(undefined);
-      setEditingName("");
-    });
+    void updateSubject(id, { name: editingName })
+      .then(() => {
+        setEditingId(undefined);
+        setEditingName("");
+      })
+      .catch((error) => logError("subjects.update", error));
   }
 
   function removeSubject(id: string) {
@@ -142,13 +150,13 @@ export function SubjectsWindow() {
     setDeletingId(id);
     window.setTimeout(() => {
       void deleteSubject(id)
-        .catch(() => undefined)
+        .catch((error) => logError("subjects.delete", error))
         .finally(() => setDeletingId(undefined));
     }, ROW_ANIMATION_DURATION);
   }
 
   function startWindowDrag() {
-    void getCurrentWindow().startDragging().catch(() => undefined);
+    void getCurrentWindow().startDragging().catch((error) => logError("subjects.start-dragging", error));
   }
 
   const visibleSubjects = subjects.filter((subject) => {

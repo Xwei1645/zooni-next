@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { LoaderCircle, Monitor, Moon, Sun } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 
+import { logError } from "@/lib/logger";
+
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Switch } from "@/components/ui/switch";
@@ -46,7 +48,8 @@ export function AppearanceSettings({
           setSystemFonts(fonts);
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        logError("appearance.list-system-fonts", error);
         if (active) {
           setSystemFonts([]);
         }

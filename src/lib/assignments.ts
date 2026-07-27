@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
+import { logError } from "@/lib/logger";
+
 export interface Assignment {
   id: string;
   subjectId: string;
@@ -53,7 +55,8 @@ export function useAssignments() {
             setAssignments(nextAssignments);
           }
         })
-        .catch(() => {
+        .catch((error) => {
+          logError("assignments.load", error);
           if (active) {
             setAssignments([]);
           }
@@ -63,7 +66,7 @@ export function useAssignments() {
             setLoaded(true);
           }
         });
-    });
+    }).catch((error) => logError("assignments.listen", error));
 
     return () => {
       active = false;

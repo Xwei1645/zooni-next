@@ -7,6 +7,7 @@ use std::{
     time::Duration,
 };
 
+use log::error;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
 use uuid::Uuid;
@@ -46,7 +47,7 @@ impl SubjectState {
         let path = match subjects_path(app) {
             Ok(path) => Some(path),
             Err(error) => {
-                eprintln!("Failed to resolve subjects path: {error}");
+                error!("failed to resolve subjects path: {error}");
                 None
             }
         };
@@ -58,7 +59,7 @@ impl SubjectState {
 
                 if let Some(path) = path.as_deref() {
                     if let Err(error) = write_subjects(path, &subjects) {
-                        eprintln!("Failed to write default subjects: {error}");
+                        error!("failed to write default subjects: {error}");
                     }
                 }
 
@@ -133,7 +134,7 @@ impl SubjectState {
                 Ok(snapshot) if snapshot.revision == revision => snapshot.subjects.clone(),
                 Ok(_) => return,
                 Err(error) => {
-                    eprintln!("Failed to access subjects for persistence: {error}");
+                    error!("failed to access subjects for persistence: {error}");
                     return;
                 }
             };
@@ -142,7 +143,7 @@ impl SubjectState {
             };
 
             if let Err(error) = write_subjects(path, &subjects) {
-                eprintln!("Failed to persist subjects: {error}");
+                error!("failed to persist subjects: {error}");
             }
         });
     }
@@ -200,7 +201,7 @@ fn validate_name(name: &str) -> Result<(), String> {
 
 fn broadcast_subjects(app: &AppHandle, subjects: &[Subject]) {
     if let Err(error) = app.emit("subjects-changed", subjects) {
-        eprintln!("Failed to broadcast subjects update: {error}");
+        error!("failed to broadcast subjects update: {error}");
     }
 }
 

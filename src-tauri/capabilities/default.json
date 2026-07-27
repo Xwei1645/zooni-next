@@ -22,6 +22,7 @@
     "core:window:allow-show",
     "core:event:allow-emit",
     "core:event:allow-listen",
+    "log:default",
     "opener:default"
   ]
 }

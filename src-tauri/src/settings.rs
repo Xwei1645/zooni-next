@@ -6,6 +6,7 @@ use std::{
     time::Duration,
 };
 
+use log::error;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
 
@@ -86,7 +87,7 @@ impl AppSettingsState {
         let path = match settings_path(app) {
             Ok(path) => Some(path),
             Err(error) => {
-                eprintln!("Failed to resolve settings path: {error}");
+                error!("failed to resolve settings path: {error}");
                 None
             }
         };
@@ -99,7 +100,7 @@ impl AppSettingsState {
 
                 if let Some(path) = path.as_deref() {
                     if let Err(error) = write_settings(path, &defaults) {
-                        eprintln!("Failed to write default settings: {error}");
+                        error!("failed to write default settings: {error}");
                     }
                 }
 
@@ -149,7 +150,7 @@ impl AppSettingsState {
                 Ok(snapshot) if snapshot.revision == revision => snapshot,
                 Ok(_) => return,
                 Err(error) => {
-                    eprintln!("Failed to access settings for persistence: {error}");
+                    error!("failed to access settings for persistence: {error}");
                     return;
                 }
             };
@@ -159,7 +160,7 @@ impl AppSettingsState {
             };
 
             if let Err(error) = write_settings(path, &snapshot.settings) {
-                eprintln!("Failed to persist settings: {error}");
+                error!("failed to persist settings: {error}");
             }
         });
     }
@@ -180,7 +181,7 @@ pub fn update_app_settings(
     let snapshot = state.update(settings)?;
 
     if let Err(error) = app.emit("settings-changed", snapshot.clone()) {
-        eprintln!("Failed to broadcast settings update: {error}");
+        error!("failed to broadcast settings update: {error}");
     }
 
     state.schedule_persist(snapshot.revision);

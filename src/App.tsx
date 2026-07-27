@@ -43,6 +43,7 @@ import {
   type AssignmentInput,
 } from "@/lib/assignments";
 import { useBoardState } from "@/lib/board-state";
+import { logError } from "@/lib/logger";
 import { useWindowSettings } from "@/lib/settings";
 import { useSubjects } from "@/lib/subjects";
 import {
@@ -276,7 +277,7 @@ function App() {
     }
 
     mainWindowShown.current = true;
-    void getCurrentWindow().show().catch(() => undefined);
+    void getCurrentWindow().show().catch((error) => logError("main-window.show", error));
   }, [settings]);
 
   useEffect(() => {
@@ -297,7 +298,7 @@ function App() {
       .then((state) => {
         lastCollapsedTabY.current = state.collapsedY;
       })
-      .catch(() => undefined);
+      .catch((error) => logError("main-window.load-state", error));
   }, []);
 
   useEffect(() => {
@@ -335,9 +336,9 @@ function App() {
             return;
           }
 
-            void updateMainWindowPlacement(placement).catch(() => undefined);
+            void updateMainWindowPlacement(placement).catch((error) => logError("main-window.persist-placement", error));
         })
-          .catch(() => undefined);
+          .catch((error) => logError("main-window.read-placement", error));
       }, 150);
     };
 
@@ -442,10 +443,13 @@ function App() {
       isFullscreenRef.current = nextFullscreen;
       setIsFullscreen(nextFullscreen);
     } catch (error) {
-      console.error("Fullscreen transition failed", error);
+      logError("main-window.fullscreen", error);
       const fullscreen = await appWindow
         .isFullscreen()
-        .catch(() => isFullscreenRef.current);
+        .catch((readError) => {
+          logError("main-window.read-fullscreen", readError);
+          return isFullscreenRef.current;
+        });
       isFullscreenRef.current = fullscreen;
       setIsFullscreen(fullscreen);
     } finally {
@@ -521,11 +525,11 @@ function App() {
       await animateWindowPlacement(appWindow, placement, collapsed, windowAnimation);
       setIsCollapsed(true);
       if (!restoreFullscreen) {
-        void updateMainWindowPlacement(placement).catch(() => undefined);
-        void updateMainWindowCollapsedY(collapsedPosition.y).catch(() => undefined);
+        void updateMainWindowPlacement(placement).catch((error) => logError("main-window.persist-placement", error));
+        void updateMainWindowCollapsedY(collapsedPosition.y).catch((error) => logError("main-window.persist-collapsed-position", error));
       }
     } catch (error) {
-      console.error("Window collapse failed", error);
+      logError("main-window.collapse", error);
       isCollapsedRef.current = false;
     } finally {
       window.requestAnimationFrame(() => {
@@ -563,7 +567,7 @@ function App() {
       }
       collapsedRestoreTarget.current = undefined;
     } catch (error) {
-      console.error("Window restore failed", error);
+      logError("main-window.restore", error);
       // Keep the side tab available when restoration fails.
       isCollapsedRef.current = true;
       setIsCollapsed(true);
@@ -614,7 +618,7 @@ function App() {
     lastCollapsedTabY.current = y;
     void getCurrentWindow()
       .setPosition(new PhysicalPosition(tab.x, y))
-      .catch(() => undefined);
+      .catch((error) => logError("main-window.drag-collapsed-tab", error));
   }
 
   function endTabDrag() {
@@ -624,7 +628,7 @@ function App() {
 
     const collapsedY = lastCollapsedTabY.current;
     if (drag?.moved && collapsedY !== undefined) {
-      void updateMainWindowCollapsedY(collapsedY).catch(() => undefined);
+      void updateMainWindowCollapsedY(collapsedY).catch((error) => logError("main-window.persist-collapsed-position", error));
     }
   }
 
@@ -781,9 +785,9 @@ function App() {
       animation?.finished ?? Promise.resolve(),
       groupAnimation?.finished ?? Promise.resolve(),
     ])
-      .catch(() => undefined)
+      .catch((error) => logError("assignment-removal.animation", error))
       .then(() => deleteAssignment(assignment.id))
-      .catch((error) => console.error("Failed to delete assignment", error))
+      .catch((error) => logError("assignment-removal.delete", error))
       .finally(() => {
         deletingAssignmentIds.current.delete(assignment.id);
       });

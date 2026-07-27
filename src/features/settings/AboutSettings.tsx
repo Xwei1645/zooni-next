@@ -5,6 +5,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { logError } from "@/lib/logger";
 import gplLicense from "../../../LICENSE?raw";
 import notices from "@/generated/third-party-notices.json";
 
@@ -96,5 +97,5 @@ function packageId(item: ThirdPartyPackage) {
 
 function handleExternalLink(event: MouseEvent<HTMLAnchorElement>, url: string) {
   event.preventDefault();
-  void openUrl(url).catch(() => undefined);
+  void openUrl(url).catch((error) => logError("about.open-url", error));
 }

@@ -6,7 +6,9 @@ mod subjects;
 mod window_state;
 mod windows;
 
+use log::{error, info, LevelFilter};
 use tauri::Manager;
+use tauri_plugin_log::{FileOpenStrategy, RotationStrategy, Target, TargetKind};
 
 #[tauri::command]
 fn exit_app(app: tauri::AppHandle) {
@@ -16,10 +18,29 @@ fn exit_app(app: tauri::AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .targets([
+                    Target::new(TargetKind::Stdout),
+                    Target::new(TargetKind::LogDir {
+                        file_name: Some("zooni-next".into()),
+                    }),
+                ])
+                .level(if cfg!(debug_assertions) {
+                    LevelFilter::Debug
+                } else {
+                    LevelFilter::Info
+                })
+                .max_file_size(1024 * 1024)
+                .file_open_strategy(FileOpenStrategy::Rotate)
+                .rotation_strategy(RotationStrategy::KeepSome(10))
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
         .manage(windows::OptionsWindowState::default())
         .manage(windows::SubjectsWindowState::default())
         .setup(|app| {
+            info!("application startup");
             app.manage(board_state::BoardState::load(&app.handle()));
             let window_state = window_state::MainWindowState::load(&app.handle());
             window_state.restore_main_window(&app.handle())?;
@@ -59,5 +80,5 @@ pub fn run() {
             windows::hide_subjects_window
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .unwrap_or_else(|error| error!("application shutdown failed: {error}"));
 }

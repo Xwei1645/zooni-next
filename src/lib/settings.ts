@@ -8,6 +8,7 @@ import {
   type AppSettings,
   defaultSettings,
 } from "@/lib/appearance";
+import { logError } from "@/lib/logger";
 
 export interface AppSettingsSnapshot {
   settings: AppSettings;
@@ -74,11 +75,12 @@ export function useWindowSettings() {
           }
 
           unlisten = cleanup;
-          void loadAppSettings().then(applySnapshot).catch(() => undefined);
+          void loadAppSettings().then(applySnapshot).catch((error) => logError("settings.load", error));
         })
-        .catch(() => {
+        .catch((error) => {
+          logError("settings.listen", error);
           if (active) {
-            void loadAppSettings().then(applySnapshot).catch(() => undefined);
+            void loadAppSettings().then(applySnapshot).catch((loadError) => logError("settings.load", loadError));
           }
         });
     }

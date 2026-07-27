@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { isTauri, invoke } from "@tauri-apps/api/core";
 
+import { logError } from "@/lib/logger";
+
 export interface BoardState {
   columnCount: number;
   autoColumnCount: boolean;
@@ -39,7 +41,7 @@ export function useBoardState() {
           setBoardState(nextBoardState);
         }
       })
-      .catch(() => undefined);
+      .catch((error) => logError("board-state.load", error));
 
     return () => {
       active = false;
@@ -48,7 +50,7 @@ export function useBoardState() {
 
   function saveBoardState(nextBoardState: BoardState) {
     setBoardState(nextBoardState);
-    void updateBoardState(nextBoardState).catch(() => undefined);
+    void updateBoardState(nextBoardState).catch((error) => logError("board-state.save", error));
   }
 
   return { boardState, saveBoardState };

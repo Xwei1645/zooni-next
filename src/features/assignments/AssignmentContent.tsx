@@ -10,6 +10,7 @@ import {
   $getRoot,
   type InitialEditorStateType,
 } from "lexical";
+import { logError } from "@/lib/logger";
 
 interface AssignmentContentProps {
   content: string;
@@ -72,7 +73,7 @@ export function AssignmentContent({ content, contentZoom }: AssignmentContentPro
         namespace: "assignment-content",
         editable: false,
         editorState: assignmentEditorStateFromContent(content),
-        onError: (error) => console.error("Failed to render assignment content", error),
+        onError: (error) => logError("assignment-content", error),
       }}
     >
       <RichTextPlugin
