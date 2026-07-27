@@ -449,10 +449,10 @@ function App() {
       isFullscreenRef.current = fullscreen;
       setIsFullscreen(fullscreen);
     } finally {
-      window.requestAnimationFrame(() => {
-        isChangingWindow.current = false;
-        setIsFullscreenTransitioning(false);
-      });
+      await waitForWindowFrame();
+      await waitForWindowFrame();
+      isChangingWindow.current = false;
+      setIsFullscreenTransitioning(false);
     }
   }
 
@@ -866,6 +866,7 @@ function App() {
                     variant="ghost"
                     size="icon-lg"
                     aria-label="菜单"
+                    disabled={isFullscreenTransitioning}
                   />
                 }
               >
