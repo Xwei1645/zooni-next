@@ -47,9 +47,9 @@ import { useWindowSettings } from "@/lib/settings";
 import { useSubjects } from "@/lib/subjects";
 import {
   loadMainWindowState,
-  type MainWindowState,
   type WindowPlacement,
-  updateMainWindowState,
+  updateMainWindowCollapsedY,
+  updateMainWindowPlacement,
 } from "@/lib/window-state";
 import { exitApp, openOptionsWindow, openSubjectsWindow } from "@/lib/windows";
 import { AssignmentsBoard } from "@/features/assignments/AssignmentsBoard";
@@ -230,7 +230,6 @@ function App() {
     }
     | undefined
   >(undefined);
-  const windowState = useRef<MainWindowState>({});
   const assignmentCards = useRef(new Map<string, HTMLElement>());
   const assignmentSubjectGroups = useRef(new Map<string, HTMLElement>());
   const deletingAssignmentIds = useRef(new Set<string>());
@@ -296,7 +295,6 @@ function App() {
 
     void loadMainWindowState()
       .then((state) => {
-        windowState.current = state;
         lastCollapsedTabY.current = state.collapsedY;
       })
       .catch(() => undefined);
@@ -337,12 +335,7 @@ function App() {
             return;
           }
 
-          const nextState = {
-            ...windowState.current,
-            normalPlacement: placement,
-          };
-          windowState.current = nextState;
-          void updateMainWindowState(nextState).catch(() => undefined);
+            void updateMainWindowPlacement(placement).catch(() => undefined);
         })
           .catch(() => undefined);
       }, 150);
@@ -528,13 +521,8 @@ function App() {
       await animateWindowPlacement(appWindow, placement, collapsed, windowAnimation);
       setIsCollapsed(true);
       if (!restoreFullscreen) {
-        const nextState = {
-          ...windowState.current,
-          normalPlacement: placement,
-          collapsedY: collapsedPosition.y,
-        };
-        windowState.current = nextState;
-        void updateMainWindowState(nextState).catch(() => undefined);
+        void updateMainWindowPlacement(placement).catch(() => undefined);
+        void updateMainWindowCollapsedY(collapsedPosition.y).catch(() => undefined);
       }
     } catch (error) {
       console.error("Window collapse failed", error);
@@ -634,10 +622,9 @@ function App() {
     tabDrag.current = undefined;
     tabWasDragged.current = drag?.moved ?? false;
 
-    if (drag?.moved) {
-      const nextState = { ...windowState.current, collapsedY: lastCollapsedTabY.current };
-      windowState.current = nextState;
-      void updateMainWindowState(nextState).catch(() => undefined);
+    const collapsedY = lastCollapsedTabY.current;
+    if (drag?.moved && collapsedY !== undefined) {
+      void updateMainWindowCollapsedY(collapsedY).catch(() => undefined);
     }
   }
 

@@ -24,6 +24,10 @@ export function loadMainWindowState() {
   return invoke<MainWindowState>("get_main_window_state");
 }
 
-export function updateMainWindowState(windowState: MainWindowState) {
-  return invoke("update_main_window_state", { windowState });
+export function updateMainWindowPlacement(placement: WindowPlacement) {
+  return invoke("update_main_window_placement", { placement });
+}
+
+export function updateMainWindowCollapsedY(collapsedY: number) {
+  return invoke("update_main_window_collapsed_y", { collapsedY });
 }

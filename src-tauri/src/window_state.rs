@@ -122,12 +122,25 @@ impl MainWindowState {
             .map_err(|error| error.to_string())
     }
 
-    fn update(&self, state: MainWindowStateData) -> Result<(), String> {
-        if !state.is_valid() {
+    fn update_normal_placement(&self, placement: WindowPlacement) -> Result<(), String> {
+        if !placement.is_valid() {
             return Err("Window state is invalid".into());
         }
 
-        *self.0.state.lock().map_err(|error| error.to_string())? = state;
+        self.0
+            .state
+            .lock()
+            .map_err(|error| error.to_string())?
+            .normal_placement = Some(placement);
+        Ok(())
+    }
+
+    fn update_collapsed_y(&self, collapsed_y: i32) -> Result<(), String> {
+        self.0
+            .state
+            .lock()
+            .map_err(|error| error.to_string())?
+            .collapsed_y = Some(collapsed_y);
         Ok(())
     }
 
@@ -163,11 +176,21 @@ pub fn get_main_window_state(
 }
 
 #[tauri::command]
-pub fn update_main_window_state(
+pub fn update_main_window_placement(
     state: State<'_, MainWindowState>,
-    window_state: MainWindowStateData,
+    placement: WindowPlacement,
 ) -> Result<(), String> {
-    state.update(window_state)?;
+    state.update_normal_placement(placement)?;
+    state.schedule_persist();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn update_main_window_collapsed_y(
+    state: State<'_, MainWindowState>,
+    collapsed_y: i32,
+) -> Result<(), String> {
+    state.update_collapsed_y(collapsed_y)?;
     state.schedule_persist();
     Ok(())
 }
