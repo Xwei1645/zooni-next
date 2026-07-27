@@ -1030,6 +1030,7 @@ function App() {
             className="app-toaster"
             position="bottom-left"
             richColors
+            theme={settings?.appearance ?? "system"}
             style={{
               fontFamily: settings ? fontFamilyStack(settings.fontFamily) : undefined,
             }}
