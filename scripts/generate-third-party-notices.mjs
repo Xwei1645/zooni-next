@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
@@ -155,5 +155,6 @@ const output = {
   packages,
 };
 const outputPath = join(root, "src", "generated", "third-party-notices.json");
+mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, `${JSON.stringify(output)}\n`);
 console.log(`Generated ${packages.length} third-party package links.`);
