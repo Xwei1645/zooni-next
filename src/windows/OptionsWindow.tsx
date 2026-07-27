@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Copy,
+  Info,
   Minus,
   Palette,
   Settings2,
@@ -12,7 +13,8 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AppearanceSettings } from "@/features/settings";
+import { AboutSettings } from "@/features/settings/AboutSettings";
+import { AppearanceSettings } from "@/features/settings/AppearanceSettings";
 import { type AppSettings } from "@/lib/appearance";
 import { updateAppSettings, useWindowSettings } from "@/lib/settings";
 
@@ -20,6 +22,7 @@ import "./OptionsWindow.css";
 
 export function OptionsWindow() {
   const [isMaximized, setIsMaximized] = useState(false);
+  const [activeSection, setActiveSection] = useState<"appearance" | "about">("appearance");
   const settings = useWindowSettings();
   const readySignaled = useRef(false);
 
@@ -130,21 +133,33 @@ export function OptionsWindow() {
         <nav className="settings-nav" aria-label="设置分类">
           <Button
             type="button"
-            variant="secondary"
+            variant={activeSection === "appearance" ? "secondary" : "ghost"}
             className="settings-nav-item"
-            aria-current="page"
+            aria-current={activeSection === "appearance" ? "page" : undefined}
+            onClick={() => setActiveSection("appearance")}
           >
             <Palette aria-hidden="true" />
             外观
           </Button>
+          <Button
+            type="button"
+            variant={activeSection === "about" ? "secondary" : "ghost"}
+            className="settings-nav-item"
+            aria-current={activeSection === "about" ? "page" : undefined}
+            onClick={() => setActiveSection("about")}
+          >
+            <Info aria-hidden="true" />
+            关于
+          </Button>
         </nav>
         <ScrollArea className="settings-panel-scroll-area">
-          {settings && (
+          {activeSection === "appearance" && settings && (
             <AppearanceSettings
               settings={settings}
               onSettingsChange={handleSettingsChange}
             />
           )}
+          {activeSection === "about" && <AboutSettings />}
         </ScrollArea>
       </div>
     </main>

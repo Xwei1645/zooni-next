@@ -21,6 +21,7 @@
     "core:window:allow-is-maximized",
     "core:window:allow-show",
     "core:event:allow-emit",
-    "core:event:allow-listen"
+    "core:event:allow-listen",
+    "opener:default"
   ]
 }
