@@ -75,15 +75,13 @@
   position: fixed;
   right: 16px;
   bottom: 16px;
-  z-index: 12000;
+  z-index: 10000;
   overflow: hidden;
   border: 1px solid color-mix(in oklch, var(--foreground) 12%, transparent);
   border-radius: calc(var(--radius) * 2.6);
-  background: color-mix(
-    in oklch,
-    color-mix(in oklch, var(--background) 94%, var(--foreground)) calc(var(--toolbar-background-opacity) * 100%),
-    transparent
-  );
+  background: color-mix(in oklch,
+      color-mix(in oklch, var(--background) 94%, var(--foreground)) calc(var(--toolbar-background-opacity) * 100%),
+      transparent);
   backdrop-filter: blur(12px);
   transition: opacity 180ms ease-out, transform 180ms ease-out;
 }
@@ -93,18 +91,18 @@
   opacity: 0.62;
 }
 
-.toolbar > * {
+.toolbar>* {
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
 }
 
-.toolbar > * + * {
+.toolbar>*+* {
   border-inline-start: 1px solid color-mix(in oklch, var(--foreground) 12%, transparent) !important;
 }
 
 .menu-content[data-slot="dropdown-menu-content"] {
-  width: 14rem;
+  width: 14.5rem;
 }
 
 .menu-grid {
@@ -144,4 +142,18 @@
   display: grid;
   grid-template-columns: 24px 56px 24px;
   align-items: center;
+}
+
+.menu-control-auto {
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.menu-control-auto .menu-stepper {
+  margin-left: auto;
+}
+
+.menu-auto-button[aria-pressed="true"] {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
 }

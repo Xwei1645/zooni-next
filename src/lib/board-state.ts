@@ -3,11 +3,15 @@ import { isTauri, invoke } from "@tauri-apps/api/core";
 
 export interface BoardState {
   columnCount: number;
+  autoColumnCount: boolean;
+  autoZoom: boolean;
   zoom: number;
 }
 
 export const defaultBoardState: BoardState = {
   columnCount: 3,
+  autoColumnCount: false,
+  autoZoom: false,
   zoom: 100,
 };
 

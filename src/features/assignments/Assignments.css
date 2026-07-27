@@ -14,10 +14,6 @@
   overflow: auto;
 }
 
-.assignment-group + .assignment-group {
-  margin-top: 36px;
-}
-
 .assignment-group-title {
   margin: 0 0 12px;
   color: var(--foreground);
@@ -36,24 +32,94 @@
   min-width: 100%;
 }
 
-.assignment-card {
+.assignment-subject-groups {
+  position: relative;
+  width: 100%;
+  min-height: 1px;
+  transition: height 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.assignment-subject-group {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  min-width: 0;
+  transition: width 280ms cubic-bezier(0.22, 1, 0.36, 1), transform 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms ease-out;
+  will-change: width, transform;
+}
+
+.assignment-subject-group-cards {
+  columns: var(--assignment-subject-card-columns);
+  column-gap: 12px;
+}
+
+.assignment-card-position {
   --assignment-card-surface: color-mix(in oklch, var(--card) calc(var(--card-background-opacity) * 100%), transparent);
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 12px;
+  overflow: clip;
+  break-inside: avoid;
+  border-radius: 24px;
+  isolation: isolate;
+  will-change: transform;
+}
+
+.assignment-card-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--assignment-card-surface);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.assignment-card-position > .assignment-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  border-radius: inherit;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.assignment-card-position-is-popping {
+  animation: assignment-card-pop 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.assignment-card {
   position: relative;
   box-sizing: border-box;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid color-mix(in oklch, var(--foreground) 12%, transparent);
+  border: 0;
   border-radius: 24px;
   background: var(--assignment-card-surface);
   backdrop-filter: blur(12px);
   color: var(--card-foreground);
-  box-shadow: 0 6px 16px color-mix(in oklch, var(--foreground) 8%, transparent);
   outline: none;
 }
 
 .assignment-card:focus-visible {
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent);
+  outline: 2px solid color-mix(in oklch, var(--ring) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.assignment-card-position:has(> .assignment-card:focus-visible) {
+  outline: 2px solid color-mix(in oklch, var(--ring) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.assignment-card-position > .assignment-card:focus-visible {
+  outline: none;
 }
 
 .assignment-content {
@@ -140,10 +206,6 @@
   min-width: 68px;
 }
 
-.assignment-card-is-popping {
-  animation: assignment-card-pop 260ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
 .assignment-composer-layer {
   position: fixed;
   z-index: 11000;
@@ -151,8 +213,8 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: color-mix(in oklch, var(--foreground) 36%, transparent);
-  backdrop-filter: blur(3px);
+  background: color-mix(in oklch, var(--foreground) 52%, transparent);
+  backdrop-filter: blur(2px) brightness(0.72) saturate(0.7);
   animation: assignment-composer-layer-in 160ms ease-out;
 }
 
@@ -274,7 +336,12 @@
 
 .assignment-subject-select {
   max-width: none;
+  border-radius: 24px;
   background: transparent;
+}
+
+.assignment-subject-select-content {
+  border-radius: 24px;
 }
 
 .assignment-subject-select-positioner {
@@ -329,12 +396,16 @@
   to { opacity: 1; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .assignment-subject-groups,
+  .assignment-subject-group {
+    transition: none;
+  }
+}
+
 @media (max-width: 640px) {
   .assignments-board {
     padding: 28px 16px 88px;
   }
 
-  .assignment-group + .assignment-group {
-    margin-top: 28px;
-  }
 }

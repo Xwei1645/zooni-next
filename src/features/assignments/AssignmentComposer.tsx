@@ -119,7 +119,6 @@ function TextToolbar() {
         className="assignment-editor-tool"
         aria-label="粗体"
         aria-pressed={isBold}
-        title="粗体"
         onMouseDown={preserveSelection}
         onClick={() => {
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
@@ -135,7 +134,6 @@ function TextToolbar() {
           size="icon-sm"
           className="assignment-editor-tool"
           aria-label="减小字号"
-          title="减小字号"
           onMouseDown={preserveSelection}
           onClick={() => setSelectionFontSize(fontSize - 1)}
         >
@@ -170,7 +168,6 @@ function TextToolbar() {
           size="icon-sm"
           className="assignment-editor-tool"
           aria-label="增大字号"
-          title="增大字号"
           onMouseDown={preserveSelection}
           onClick={() => setSelectionFontSize(fontSize + 1)}
         >
@@ -284,7 +281,11 @@ export function AssignmentComposer({
                   {subjects.find((subject) => subject.id === subjectId)?.name}
                 </SelectValue>
               </SelectTrigger>
-            <SelectContent positionerClassName="assignment-subject-select-positioner">
+            <SelectContent
+              className="assignment-subject-select-content"
+              positionerClassName="assignment-subject-select-positioner"
+              sideOffset={10}
+            >
                 {subjects.map((subject) => (
                   <SelectItem key={subject.id} value={subject.id}>
                     {subject.name}
@@ -298,7 +299,6 @@ export function AssignmentComposer({
             size="icon-lg"
             className="assignment-confirm-button"
             aria-label="确定"
-            title="确定"
             disabled={!subjectId || saving}
           >
             <Check aria-hidden="true" />

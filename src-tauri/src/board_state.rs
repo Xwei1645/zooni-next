@@ -13,11 +13,15 @@ const BOARD_STATE_FILE_NAME: &str = "board-state.json";
 const PERSIST_DELAY: Duration = Duration::from_millis(500);
 const DEFAULT_COLUMN_COUNT: u8 = 3;
 const DEFAULT_ZOOM: u16 = 100;
+const DEFAULT_AUTO_COLUMN_COUNT: bool = false;
+const DEFAULT_AUTO_ZOOM: bool = false;
 
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(default, deny_unknown_fields, rename_all = "camelCase")]
 pub struct BoardStateData {
     column_count: u8,
+    auto_column_count: bool,
+    auto_zoom: bool,
     zoom: u16,
 }
 
@@ -31,6 +35,8 @@ impl Default for BoardStateData {
     fn default() -> Self {
         Self {
             column_count: DEFAULT_COLUMN_COUNT,
+            auto_column_count: DEFAULT_AUTO_COLUMN_COUNT,
+            auto_zoom: DEFAULT_AUTO_ZOOM,
             zoom: DEFAULT_ZOOM,
         }
     }
@@ -168,6 +174,8 @@ mod tests {
         let state = serde_json::from_str::<BoardStateData>("{}").expect("defaults should load");
 
         assert_eq!(state.column_count, 3);
+        assert!(!state.auto_column_count);
+        assert!(!state.auto_zoom);
         assert_eq!(state.zoom, 100);
     }
 

@@ -230,6 +230,7 @@ function App() {
   >(undefined);
   const windowState = useRef<MainWindowState>({});
   const assignmentCards = useRef(new Map<string, HTMLElement>());
+  const assignmentSubjectGroups = useRef(new Map<string, HTMLElement>());
   const deletingAssignmentIds = useRef(new Set<string>());
   const pendingAssignmentTransition = useRef<AssignmentTransition | undefined>(undefined);
 
@@ -741,6 +742,16 @@ function App() {
 
     deletingAssignmentIds.current.add(assignment.id);
     const card = assignmentCards.current.get(assignment.id);
+    const subjectIds = new Set(subjects.map((subject) => subject.id));
+    const groupId = subjectIds.has(assignment.subjectId)
+      ? assignment.subjectId
+      : "unclassified";
+    const isLastInGroup = assignments.filter((item) => (
+      subjectIds.has(item.subjectId) ? item.subjectId : "unclassified"
+    ) === groupId).length === 1;
+    const subjectGroup = isLastInGroup
+      ? assignmentSubjectGroups.current.get(groupId)
+      : undefined;
     const animation = card?.animate(
       [
         { opacity: 1, transform: "translateY(0)" },
@@ -748,8 +759,15 @@ function App() {
       ],
       { duration: 160, easing: "ease-out", fill: "forwards" },
     );
+    const groupAnimation = subjectGroup?.animate(
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: 160, easing: "ease-out", fill: "forwards" },
+    );
 
-    void (animation?.finished ?? Promise.resolve())
+    void Promise.all([
+      animation?.finished ?? Promise.resolve(),
+      groupAnimation?.finished ?? Promise.resolve(),
+    ])
       .catch(() => undefined)
       .then(() => deleteAssignment(assignment.id))
       .catch((error) => console.error("Failed to delete assignment", error))
@@ -787,11 +805,20 @@ function App() {
           <ScrollArea className="assignments-scroll-area" horizontal>
             <AssignmentsBoard
               assignments={assignments}
+              autoColumnCount={boardState.autoColumnCount}
+              autoZoom={boardState.autoZoom}
               columnCount={boardState.columnCount}
               contentZoom={boardState.zoom / 100}
               onCardRef={registerAssignmentCard}
               onDelete={removeAssignment}
               onEdit={editAssignment}
+              onSubjectGroupRef={(id, element) => {
+                if (element) {
+                  assignmentSubjectGroups.current.set(id, element);
+                } else {
+                  assignmentSubjectGroups.current.delete(id);
+                }
+              }}
               poppingAssignmentId={poppingAssignmentId}
               subjects={subjects}
               updatingAssignment={updatingAssignment}
@@ -814,7 +841,6 @@ function App() {
             variant="ghost"
             size="icon-lg"
             aria-label="添加"
-            title={subjects.length === 0 ? "需要先创建科目" : "添加作业"}
             disabled={subjects.length === 0 || Boolean(composer)}
             onClick={openNewAssignment}
           >
@@ -867,15 +893,31 @@ function App() {
               <PanelRightClose aria-hidden="true" />
               收起
             </DropdownMenuItem>
-            <div className="menu-control">
+            <div className="menu-control menu-control-auto">
               <span>界面缩放</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="menu-auto-button"
+                aria-label="自动计算界面缩放"
+                aria-pressed={boardState.autoZoom}
+                onClick={() =>
+                  saveBoardState({
+                    ...boardState,
+                    autoZoom: !boardState.autoZoom,
+                  })
+                }
+              >
+                A
+              </Button>
               <div className="menu-stepper" aria-label="界面缩放">
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-xs"
                   aria-label="缩小界面"
-                  disabled={boardState.zoom <= 50}
+                  disabled={boardState.autoZoom || boardState.zoom <= 50}
                   onClick={() =>
                     saveBoardState({
                       ...boardState,
@@ -885,13 +927,15 @@ function App() {
                 >
                   <Minus aria-hidden="true" />
                 </Button>
-                <span className="menu-stepper-value">{boardState.zoom}%</span>
+                <span className="menu-stepper-value">
+                  {boardState.autoZoom ? "自动" : `${boardState.zoom}%`}
+                </span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-xs"
                   aria-label="放大界面"
-                  disabled={boardState.zoom >= 200}
+                  disabled={boardState.autoZoom || boardState.zoom >= 200}
                   onClick={() =>
                     saveBoardState({
                       ...boardState,
@@ -903,40 +947,58 @@ function App() {
                 </Button>
               </div>
             </div>
-            <div className="menu-control">
+            <div className="menu-control menu-control-auto">
               <span>作业列数</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="menu-auto-button"
+                aria-label="自动计算作业列数"
+                aria-pressed={boardState.autoColumnCount}
+                onClick={() =>
+                  saveBoardState({
+                    ...boardState,
+                    autoColumnCount: !boardState.autoColumnCount,
+                  })
+                }
+              >
+                A
+              </Button>
               <div className="menu-stepper" aria-label="作业列数">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label="减少作业列数"
-                  disabled={boardState.columnCount <= 1}
-                  onClick={() =>
-                    saveBoardState({
-                      ...boardState,
-                      columnCount: Math.max(1, boardState.columnCount - 1),
-                    })
-                  }
-                >
-                  <Minus aria-hidden="true" />
-                </Button>
-                <span className="menu-stepper-value">{boardState.columnCount} 列</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label="增加作业列数"
-                  disabled={boardState.columnCount >= 10}
-                  onClick={() =>
-                    saveBoardState({
-                      ...boardState,
-                      columnCount: Math.min(10, boardState.columnCount + 1),
-                    })
-                  }
-                >
-                  <Plus aria-hidden="true" />
-                </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="减少作业列数"
+                    disabled={boardState.autoColumnCount || boardState.columnCount <= 1}
+                    onClick={() =>
+                      saveBoardState({
+                        ...boardState,
+                        columnCount: Math.max(1, boardState.columnCount - 1),
+                      })
+                    }
+                  >
+                    <Minus aria-hidden="true" />
+                  </Button>
+                  <span className="menu-stepper-value">
+                    {boardState.autoColumnCount ? "自动" : `${boardState.columnCount} 列`}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="增加作业列数"
+                    disabled={boardState.autoColumnCount || boardState.columnCount >= 10}
+                    onClick={() =>
+                      saveBoardState({
+                        ...boardState,
+                        columnCount: Math.min(10, boardState.columnCount + 1),
+                      })
+                    }
+                  >
+                    <Plus aria-hidden="true" />
+                  </Button>
               </div>
             </div>
             <DropdownMenuItem

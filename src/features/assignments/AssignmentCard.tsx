@@ -10,7 +10,6 @@ interface AssignmentCardProps {
   assignment: Assignment;
   cardRef?: (element: HTMLElement | null) => void;
   contentZoom: number;
-  isPopping?: boolean;
   onDelete: (assignment: Assignment) => void;
   onEdit: (assignment: Assignment) => void;
   isUpdating?: boolean;
@@ -21,7 +20,6 @@ export function AssignmentCard({
   assignment,
   cardRef,
   contentZoom,
-  isPopping,
   onDelete,
   onEdit,
   isUpdating = false,
@@ -68,9 +66,7 @@ export function AssignmentCard({
           ? "assignment-card assignment-card-is-updating"
           : previousContent !== undefined
             ? "assignment-card assignment-card-is-preparing"
-            : isPopping
-              ? "assignment-card assignment-card-is-popping"
-              : "assignment-card"
+            : "assignment-card"
       }
       ref={registerCard}
       tabIndex={0}
