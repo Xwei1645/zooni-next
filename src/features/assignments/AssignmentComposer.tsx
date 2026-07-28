@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
-import { Bold, Check, Minus, Plus } from "lucide-react";
+import { Bold, Check, Minus, Palette, Plus } from "lucide-react";
+import { Popover } from "@base-ui/react/popover";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
@@ -15,6 +16,7 @@ import {
   $getSelectionStyleValueForProperty,
   $patchStyleText,
 } from "@lexical/selection";
+import { HexColorPicker } from "react-colorful";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -32,9 +34,29 @@ import type { Subject } from "@/lib/subjects";
 import { assignmentEditorStateFromContent } from "./AssignmentContent";
 
 const DEFAULT_FONT_SIZE = 16;
+const DEFAULT_TEXT_COLOR = "#000000";
 const MIN_FONT_SIZE = 10;
 const MAX_FONT_SIZE = 72;
 const EXIT_DURATION = 140;
+
+function normalizeTextColor(value: string) {
+  const match = /^#?([\da-f]{3}|[\da-f]{6})$/i.exec(value.trim());
+
+  if (!match) {
+    return DEFAULT_TEXT_COLOR;
+  }
+
+  const hex = match[1];
+  const expandedHex = hex.length === 3
+    ? [...hex].map((character) => `${character}${character}`).join("")
+    : hex;
+
+  return `#${expandedHex.toUpperCase()}`;
+}
+
+function isCompleteTextColor(value: string) {
+  return /^#?[\da-f]{6}$/i.test(value.trim());
+}
 
 interface AssignmentComposerProps {
   assignment?: Assignment;
@@ -70,6 +92,8 @@ function TextToolbar() {
   const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE);
   const [fontSizeInput, setFontSizeInput] = useState(String(DEFAULT_FONT_SIZE));
   const [isBold, setIsBold] = useState(false);
+  const [textColor, setTextColor] = useState(DEFAULT_TEXT_COLOR);
+  const [textColorInput, setTextColorInput] = useState(DEFAULT_TEXT_COLOR);
 
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState }) => {
@@ -85,8 +109,15 @@ function TextToolbar() {
           setFontSize(nextFontSize);
           setFontSizeInput(String(nextFontSize));
           setIsBold(selection.hasFormat("bold"));
+          const nextTextColor = normalizeTextColor(
+            $getSelectionStyleValueForProperty(selection, "color", DEFAULT_TEXT_COLOR),
+          );
+          setTextColor(nextTextColor);
+          setTextColorInput(nextTextColor);
         } else {
           setIsBold(false);
+          setTextColor(DEFAULT_TEXT_COLOR);
+          setTextColorInput(DEFAULT_TEXT_COLOR);
         }
       });
     });
@@ -103,6 +134,19 @@ function TextToolbar() {
 
       if ($isRangeSelection(selection)) {
         $patchStyleText(selection, { "font-size": `${clampedFontSize}px` });
+      }
+    });
+  }
+
+  function setSelectionTextColor(nextTextColor: string) {
+    const normalizedTextColor = normalizeTextColor(nextTextColor);
+    setTextColor(normalizedTextColor);
+    setTextColorInput(normalizedTextColor);
+    editor.update(() => {
+      const selection = $getSelection();
+
+      if ($isRangeSelection(selection)) {
+        $patchStyleText(selection, { color: normalizedTextColor });
       }
     });
   }
@@ -128,6 +172,56 @@ function TextToolbar() {
       >
         <Bold aria-hidden="true" />
       </Button>
+      <Popover.Root>
+        <Popover.Trigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="assignment-editor-tool assignment-text-color-trigger"
+              aria-label="文本颜色"
+              style={{ "--assignment-text-color": textColor } as React.CSSProperties}
+            />
+          }
+          onMouseDown={preserveSelection}
+        >
+          <Palette aria-hidden="true" />
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Positioner
+            className="assignment-text-color-positioner"
+            side="bottom"
+            align="start"
+            sideOffset={8}
+          >
+            <Popover.Popup
+              className="assignment-text-color-picker"
+              initialFocus={false}
+              finalFocus={false}
+            >
+              <HexColorPicker color={textColor} onChange={setSelectionTextColor} />
+              <input
+                type="text"
+                className="assignment-text-color-input"
+                aria-label="十六进制文本颜色"
+                value={textColorInput}
+                maxLength={7}
+                spellCheck={false}
+                onChange={(event) => {
+                  const nextTextColor = event.target.value;
+                  setTextColorInput(nextTextColor);
+
+                  if (isCompleteTextColor(nextTextColor)) {
+                    setSelectionTextColor(nextTextColor);
+                  }
+                }}
+                onBlur={() => setTextColorInput(textColor)}
+              />
+            </Popover.Popup>
+          </Popover.Positioner>
+        </Popover.Portal>
+      </Popover.Root>
       <div className="assignment-font-size" aria-label="字号">
         <Button
           type="button"

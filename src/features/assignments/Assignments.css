@@ -268,6 +268,95 @@
   color: var(--card-foreground);
 }
 
+.assignment-text-color-trigger {
+  position: relative;
+}
+
+.assignment-text-color-trigger::after {
+  position: absolute;
+  right: 7px;
+  bottom: 5px;
+  left: 7px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--assignment-text-color);
+  content: "";
+}
+
+.assignment-text-color-positioner {
+  z-index: 12001;
+}
+
+.assignment-text-color-picker {
+  display: grid;
+  gap: 10px;
+  width: 220px;
+  padding: 12px;
+  border: 1px solid color-mix(in oklch, var(--foreground) 15%, transparent);
+  border-radius: var(--radius);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 12px 28px color-mix(in oklch, var(--foreground) 16%, transparent);
+  outline: none;
+  transform-origin: var(--transform-origin, top left);
+}
+
+.assignment-text-color-picker[data-open] {
+  animation: assignment-text-color-picker-in 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.assignment-text-color-picker[data-closed] {
+  animation: assignment-text-color-picker-out 140ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.assignment-text-color-picker .react-colorful {
+  width: 100%;
+  height: 168px;
+}
+
+.assignment-text-color-picker .react-colorful__saturation {
+  overflow: visible;
+  border-radius: var(--radius);
+}
+
+.assignment-text-color-picker .react-colorful__saturation-white,
+.assignment-text-color-picker .react-colorful__saturation-black {
+  border-radius: inherit;
+}
+
+.assignment-text-color-picker .react-colorful__hue {
+  margin-top: 14px;
+  overflow: visible;
+  border-radius: var(--radius);
+}
+
+.assignment-text-color-picker .react-colorful__interactive {
+  overflow: visible;
+}
+
+.assignment-text-color-picker .react-colorful__pointer {
+  width: 22px;
+  height: 22px;
+}
+
+.assignment-text-color-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  text-align: center;
+  outline: none;
+}
+
+.assignment-text-color-input:focus-visible {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 35%, transparent);
+}
+
 .assignment-font-size {
   display: flex;
   align-items: center;
@@ -372,6 +461,16 @@
 @keyframes assignment-composer-layer-out {
   from { opacity: 1; }
   to { opacity: 0; }
+}
+
+@keyframes assignment-text-color-picker-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes assignment-text-color-picker-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.96) translateY(-4px); }
 }
 
 @keyframes assignment-card-pop {
