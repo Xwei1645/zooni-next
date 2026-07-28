@@ -16,9 +16,12 @@ const cargoTomlPath = resolve(rootDir, "src-tauri", "Cargo.toml")
 const tauriConfPath = resolve(rootDir, "src-tauri", "tauri.conf.json")
 
 function run(command, args) {
+  const useShell = process.platform === "win32" && command === "pnpm"
+
   return execFileSync(command, args, {
     cwd: rootDir,
     encoding: "utf8",
+    shell: useShell,
     stdio: ["inherit", "pipe", "inherit"],
   }).trim()
 }
