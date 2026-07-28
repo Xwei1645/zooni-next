@@ -420,7 +420,7 @@
   align-items: center;
   gap: 6px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: calc(var(--radius) * 2.6);
   padding: 0 10px;
   color: var(--foreground);
   font-size: 12px;
