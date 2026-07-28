@@ -178,8 +178,8 @@ export function OptionsWindow() {
           )}
           {activeSection === "about" && <AboutSettings />}
         </ScrollArea>
-        <Toaster position="bottom-right" richColors theme={settings?.appearance ?? "system"} />
       </div>
+      <Toaster position="bottom-right" richColors theme={settings?.appearance ?? "system"} />
     </main>
   );
 }
