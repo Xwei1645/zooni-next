@@ -4,17 +4,20 @@ import {
   Info,
   Minus,
   Palette,
+  RefreshCw,
   Settings2,
   Square,
   X,
 } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { Toaster } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AboutSettings } from "@/features/settings/AboutSettings";
 import { AppearanceSettings } from "@/features/settings/AppearanceSettings";
+import { UpdateSettings } from "@/features/settings/UpdateSettings";
 import { type AppSettings } from "@/lib/appearance";
 import { logError } from "@/lib/logger";
 import { updateAppSettings, useWindowSettings } from "@/lib/settings";
@@ -23,7 +26,7 @@ import "./OptionsWindow.css";
 
 export function OptionsWindow() {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [activeSection, setActiveSection] = useState<"appearance" | "about">("appearance");
+  const [activeSection, setActiveSection] = useState<"appearance" | "update" | "about">("appearance");
   const settings = useWindowSettings();
   const readySignaled = useRef(false);
 
@@ -144,6 +147,16 @@ export function OptionsWindow() {
           </Button>
           <Button
             type="button"
+            variant={activeSection === "update" ? "secondary" : "ghost"}
+            className="settings-nav-item"
+            aria-current={activeSection === "update" ? "page" : undefined}
+            onClick={() => setActiveSection("update")}
+          >
+            <RefreshCw aria-hidden="true" />
+            更新
+          </Button>
+          <Button
+            type="button"
             variant={activeSection === "about" ? "secondary" : "ghost"}
             className="settings-nav-item"
             aria-current={activeSection === "about" ? "page" : undefined}
@@ -160,8 +173,12 @@ export function OptionsWindow() {
               onSettingsChange={handleSettingsChange}
             />
           )}
+          {activeSection === "update" && settings && (
+            <UpdateSettings settings={settings} onSettingsChange={handleSettingsChange} />
+          )}
           {activeSection === "about" && <AboutSettings />}
         </ScrollArea>
+        <Toaster position="bottom-right" richColors theme={settings?.appearance ?? "system"} />
       </div>
     </main>
   );

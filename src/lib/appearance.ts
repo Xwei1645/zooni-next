@@ -1,5 +1,6 @@
 export type Appearance = "system" | "light" | "dark";
 export type FontFamily = string;
+export type UpdatePolicy = "disabled" | "notify";
 
 export const DEFAULT_FONT_FAMILY = "__default__";
 
@@ -9,6 +10,7 @@ export interface AppSettings {
   backgroundOpacity: number;
   windowAnimation: boolean;
   hideTaskbarIcon: boolean;
+  updatePolicy: UpdatePolicy;
 }
 
 export const defaultSettings: AppSettings = {
@@ -17,6 +19,7 @@ export const defaultSettings: AppSettings = {
   backgroundOpacity: 100,
   windowAnimation: true,
   hideTaskbarIcon: true,
+  updatePolicy: "notify",
 };
 
 const DEFAULT_FONT_STACK =

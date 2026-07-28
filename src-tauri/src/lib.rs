@@ -3,6 +3,7 @@ mod board_state;
 mod fonts;
 mod settings;
 mod subjects;
+mod updater;
 mod window_state;
 mod windows;
 
@@ -37,6 +38,7 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(windows::OptionsWindowState::default())
         .manage(windows::SubjectsWindowState::default())
         .setup(|app| {
@@ -48,6 +50,7 @@ pub fn run() {
             let settings = settings::AppSettingsState::load(&app.handle());
             settings.apply_main_window_taskbar_visibility(&app.handle())?;
             app.manage(settings);
+            app.manage(updater::UpdateState::new(&app.handle()));
             app.manage(subjects::SubjectState::load(&app.handle()));
             app.manage(assignments::AssignmentState::load(&app.handle()));
             windows::preload_options_window(&app.handle())?;
@@ -71,6 +74,9 @@ pub fn run() {
             window_state::get_main_window_state,
             window_state::update_main_window_placement,
             window_state::update_main_window_collapsed_y,
+            updater::get_update_snapshot,
+            updater::check_for_update,
+            updater::apply_update_policy,
             exit_app,
             windows::open_options_window,
             windows::options_window_ready,

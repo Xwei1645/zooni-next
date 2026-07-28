@@ -45,6 +45,7 @@ import {
 import { useBoardState } from "@/lib/board-state";
 import { logError } from "@/lib/logger";
 import { useWindowSettings } from "@/lib/settings";
+import { applyUpdatePolicy, useUpdateSnapshot } from "@/lib/updater";
 import { useSubjects } from "@/lib/subjects";
 import {
   loadMainWindowState,
@@ -187,10 +188,13 @@ function waitForWindowFrame() {
 
 function App() {
   const settings = useWindowSettings();
+  const updateSnapshot = useUpdateSnapshot();
   const { assignments } = useAssignments();
   const { boardState, saveBoardState } = useBoardState();
   const { subjects } = useSubjects();
   const mainWindowShown = useRef(false);
+  const appliedUpdatePolicy = useRef<string | undefined>(undefined);
+  const notifiedUpdateVersion = useRef<string | undefined>(undefined);
   const backgroundOpacity = settings?.backgroundOpacity;
   const windowAnimation = settings?.windowAnimation ?? true;
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -241,6 +245,32 @@ function App() {
       applyWindowBackgroundOpacity(backgroundOpacity);
     }
   }, [backgroundOpacity]);
+
+  useEffect(() => {
+    if (!settings || appliedUpdatePolicy.current === settings.updatePolicy) {
+      return;
+    }
+
+    appliedUpdatePolicy.current = settings.updatePolicy;
+    void applyUpdatePolicy(settings.updatePolicy).catch((error) => logError("updater.policy", error));
+  }, [settings]);
+
+  useEffect(() => {
+    if (
+      settings?.updatePolicy !== "notify" ||
+      updateSnapshot?.status !== "available" ||
+      !updateSnapshot.availableVersion ||
+      notifiedUpdateVersion.current === updateSnapshot.availableVersion
+    ) {
+      return;
+    }
+
+    notifiedUpdateVersion.current = updateSnapshot.availableVersion;
+    toast.info("发现新版本", {
+      id: "update-available",
+      description: `v${updateSnapshot.availableVersion} 已可用。`,
+    });
+  }, [settings?.updatePolicy, updateSnapshot]);
 
   useEffect(() => {
     document.documentElement.style.setProperty(

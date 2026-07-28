@@ -24,6 +24,13 @@ pub enum Appearance {
     Dark,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum UpdatePolicy {
+    Disabled,
+    Notify,
+}
+
 #[derive(Clone, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct AppSettings {
@@ -35,6 +42,7 @@ pub struct AppSettings {
     window_animation: bool,
     #[serde(default = "default_hide_taskbar_icon")]
     hide_taskbar_icon: bool,
+    pub update_policy: UpdatePolicy,
 }
 
 impl AppSettings {
@@ -51,6 +59,7 @@ impl Default for AppSettings {
             background_opacity: DEFAULT_BACKGROUND_OPACITY,
             window_animation: DEFAULT_WINDOW_ANIMATION,
             hide_taskbar_icon: DEFAULT_HIDE_TASKBAR_ICON,
+            update_policy: UpdatePolicy::Notify,
         }
     }
 }
@@ -242,20 +251,32 @@ mod tests {
 
     #[test]
     fn rejects_blank_font_family() {
-        let settings =
-            serde_json::from_str::<AppSettings>(r#"{"appearance":"light","fontFamily":"   "}"#)
-                .expect("settings should deserialize before semantic validation");
+        let settings = serde_json::from_str::<AppSettings>(
+            r#"{"appearance":"light","fontFamily":"   ","updatePolicy":"notify"}"#,
+        )
+        .expect("settings should deserialize before semantic validation");
 
         assert!(!settings.is_valid());
     }
 
     #[test]
     fn defaults_missing_background_opacity() {
-        let settings =
-            serde_json::from_str::<AppSettings>(r#"{"appearance":"light","fontFamily":"Inter"}"#)
-                .expect("existing settings should remain valid");
+        let settings = serde_json::from_str::<AppSettings>(
+            r#"{"appearance":"light","fontFamily":"Inter","updatePolicy":"notify"}"#,
+        )
+        .expect("settings should deserialize before semantic validation");
 
         assert_eq!(settings.background_opacity, 100);
         assert!(settings.window_animation);
+    }
+
+    #[test]
+    fn accepts_all_update_policies() {
+        for policy in ["disabled", "notify"] {
+            let settings = serde_json::from_str::<AppSettings>(&format!(
+                r#"{{"appearance":"light","fontFamily":"Inter","updatePolicy":"{policy}"}}"#,
+            ));
+            assert!(settings.is_ok(), "expected {policy} to be valid");
+        }
     }
 }
