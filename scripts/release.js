@@ -70,6 +70,8 @@ try {
   )
   writeFileSync(cargoTomlPath, cargoToml)
 
+  run("cargo", ["metadata", "--format-version", "1", "--manifest-path", "src-tauri/Cargo.toml"])
+
   const tauriConf = JSON.parse(readFileSync(tauriConfPath, "utf8"))
   tauriConf.version = version
   writeFileSync(tauriConfPath, `${JSON.stringify(tauriConf, null, 2)}\n`)
