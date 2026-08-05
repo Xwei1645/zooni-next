@@ -96,7 +96,7 @@ export function OptionsWindow() {
           onDoubleClick={() => void toggleMaximize()}
         >
           <Settings2 aria-hidden="true" />
-          <span>Zooni Next 选项</span>
+          <span>更多选项</span>
         </div>
         <div className="window-controls" aria-label="窗口控件">
           <Button

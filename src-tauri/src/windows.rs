@@ -45,7 +45,7 @@ pub fn preload_options_window(app: &AppHandle) -> tauri::Result<()> {
         OPTIONS_WINDOW_LABEL,
         WebviewUrl::App("index.html".into()),
     )
-    .title("Zooni Next 选项")
+    .title("更多选项 - Zooni Next")
     .inner_size(760.0, 560.0)
     .min_inner_size(640.0, 460.0)
     .center()
@@ -67,7 +67,7 @@ pub fn preload_subjects_window(app: &AppHandle) -> tauri::Result<()> {
         SUBJECTS_WINDOW_LABEL,
         WebviewUrl::App("index.html".into()),
     )
-    .title("Zooni Next 科目管理")
+    .title("科目编辑 - Zooni Next")
     .inner_size(440.0, 420.0)
     .min_inner_size(360.0, 300.0)
     .decorations(false)
