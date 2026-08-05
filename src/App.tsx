@@ -19,7 +19,6 @@ import { getCurrentWindow, monitorFromPoint } from "@tauri-apps/api/window";
 import { Toaster, toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
@@ -849,7 +848,7 @@ function App() {
           {!isFullscreen && (
             <div className="window-drag-handle" data-tauri-drag-region></div>
           )}
-          <ScrollArea className="assignments-scroll-area" horizontal>
+          <ScrollArea className="assignments-scroll-area">
             <AssignmentsBoard
               assignments={assignments}
               autoColumnCount={boardState.autoColumnCount}
@@ -881,18 +880,19 @@ function App() {
               onSubmit={saveAssignment}
             />
           )}
-          <DropdownMenu>
-            <ButtonGroup className="toolbar" role="toolbar" aria-label="页面工具栏">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-lg"
-                aria-label="添加"
-                disabled={Boolean(composer)}
-                onClick={openNewAssignment}
-              >
-                <Plus aria-hidden="true" />
-              </Button>
+          <div className="toolbar" role="toolbar" aria-label="页面工具栏">
+            <Button
+              type="button"
+              variant="default"
+              size="icon-lg"
+              className="toolbar-add-button"
+              aria-label="添加"
+              disabled={Boolean(composer)}
+              onClick={openNewAssignment}
+            >
+              <Plus aria-hidden="true" />
+            </Button>
+            <DropdownMenu>
               <DropdownMenuTrigger
                 render={
                   <Button
@@ -906,12 +906,12 @@ function App() {
               >
                 <Menu aria-hidden="true" />
               </DropdownMenuTrigger>
-            </ButtonGroup>
             <DropdownMenuContent
               className="menu-content"
               align="end"
+              alignOffset={-7}
               side="top"
-              sideOffset={8}
+              sideOffset={14}
             >
               <DropdownMenuGroup className="menu-grid">
                 <DropdownMenuItem
@@ -1059,7 +1059,8 @@ function App() {
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
-          </DropdownMenu>
+            </DropdownMenu>
+          </div>
           <Toaster
             className="app-toaster"
             position="bottom-left"

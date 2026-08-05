@@ -1,24 +1,28 @@
 .window-drag-handle {
   position: fixed;
-  bottom: 5px;
+  bottom: var(--space-1);
   left: 50%;
   width: 30%;
   height: 5px;
-  border-radius: 999px;
-  background: var(--muted-foreground);
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--foreground) 22%, transparent);
   opacity: 0.55;
   cursor: grab;
   transform: translateX(-50%);
   z-index: 9999;
-  transition: opacity 180ms ease-out;
+  transition: opacity var(--duration-base) var(--ease-out);
 }
 
 .window-drag-handle:active {
   cursor: grabbing;
 }
 
+.window-drag-handle:hover {
+  opacity: 0.8;
+}
+
 .app-fullscreen-transition {
-  animation: app-fullscreen-transition 180ms ease-out;
+  animation: app-fullscreen-transition var(--duration-base) var(--ease-out);
 }
 
 @keyframes app-fullscreen-transition {
@@ -47,7 +51,7 @@
   background: color-mix(in oklch, var(--background) 35%, transparent);
   cursor: pointer;
   touch-action: none;
-  animation: collapsed-side-tab-in 120ms ease-out;
+  animation: collapsed-side-tab-in var(--duration-fast) var(--ease-out);
 }
 
 .collapsed-side-tab:hover {
@@ -71,19 +75,24 @@
   }
 }
 
+/* Floating dock: pill container, primary add button + ghost menu button */
 .toolbar {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
+  right: var(--space-4);
+  bottom: var(--space-4);
   z-index: 10000;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
   border: 1px solid color-mix(in oklch, var(--foreground) 12%, transparent);
-  border-radius: calc(var(--radius) * 2.6);
+  border-radius: var(--radius-pill);
   background: color-mix(in oklch,
       color-mix(in oklch, var(--background) 94%, var(--foreground)) calc(var(--toolbar-background-opacity) * 100%),
       transparent);
-  backdrop-filter: blur(12px);
-  transition: opacity 180ms ease-out, transform 180ms ease-out;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-panel);
+  transition: opacity var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out);
 }
 
 .app-composer-active .toolbar,
@@ -91,24 +100,29 @@
   opacity: 0.62;
 }
 
-.toolbar>* {
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+.toolbar button {
+  border-radius: var(--radius-pill);
 }
 
-.toolbar>*+* {
-  border-inline-start: 1px solid color-mix(in oklch, var(--foreground) 12%, transparent) !important;
+.toolbar-add-button {
+  box-shadow: var(--shadow-sm);
+}
+
+.toolbar-add-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
 }
 
 .menu-content[data-slot="dropdown-menu-content"] {
   width: 14.5rem;
+  background: color-mix(in oklch, var(--popover) 92%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-panel);
 }
 
 .menu-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 2px;
+  gap: var(--space-1);
 }
 
 .menu-grid [data-slot="dropdown-menu-item"] {
@@ -126,8 +140,8 @@
   min-height: 36px;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
-  font-size: 14px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-body);
   font-weight: 500;
 }
 
@@ -146,7 +160,7 @@
 
 .menu-control-auto {
   justify-content: flex-start;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .menu-control-auto .menu-stepper {
@@ -154,6 +168,6 @@
 }
 
 .menu-auto-button[aria-pressed="true"] {
-  background: var(--secondary);
-  color: var(--secondary-foreground);
+  background: color-mix(in oklch, var(--primary) 12%, transparent);
+  color: var(--primary);
 }

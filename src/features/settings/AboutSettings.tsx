@@ -31,21 +31,36 @@ export function AboutSettings() {
 
   return (
     <section className="settings-panel about-panel" aria-labelledby="about-title">
+      <div className="settings-panel-header">
+        <h2 id="about-title">关于</h2>
+      </div>
       <article className="about-card">
         <div className="about-app-header">
           <div className="about-app-mark" aria-hidden="true">Z</div>
           <div>
-            <h2 id="about-title">Zooni Next</h2>
+            <h2>Zooni Next</h2>
             <p>版本 {__APP_VERSION__} (Codename Oak)</p>
           </div>
         </div>
         <p className="about-copyright">Copyright © 2026 Xwei1645</p>
         <p className="about-license-note">本项目基于 GNU General Public License v3.0 获得许可。</p>
         <div className="about-actions">
-          <a className="about-icon-link" href={GITHUB_URL} target="_blank" rel="noreferrer" onClick={(event) => handleExternalLink(event, GITHUB_URL)}>
+          <Button
+            render={
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(event) => handleExternalLink(event, GITHUB_URL)}
+              />
+            }
+            type="button"
+            variant="outline"
+            size="sm"
+          >
             <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .297a12 12 0 0 0-3.794 23.4c.6.111.82-.261.82-.58v-2.234c-3.338.726-4.043-1.416-4.043-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.085 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.775.419-1.304.762-1.604-2.665-.303-5.467-1.333-5.467-5.93 0-1.31.469-2.381 1.236-3.221-.124-.303-.536-1.523.117-3.176 0 0 1.008-.323 3.3 1.23A11.48 11.48 0 0 1 12 5.8c1.02.005 2.047.138 3.006.404 2.29-1.553 3.296-1.23 3.296-1.23.655 1.653.243 2.873.12 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.48 5.921.43.37.814 1.096.814 2.21v3.276c0 .322.216.696.825.578A12.002 12.002 0 0 0 12 .297Z" /></svg>
             GitHub
-          </a>
+          </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => setLicenseOpen(true)}>
             <BookOpenText aria-hidden="true" />
             开放源代码许可

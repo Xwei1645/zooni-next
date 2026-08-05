@@ -55,10 +55,10 @@ export function UpdateSettings({ settings, onSettingsChange }: UpdateSettingsPro
       </section>
       <section className="settings-section settings-update-policy-row">
         <div className="settings-field-heading"><h3>更新策略</h3><p>设置应用何时自动检查更新。</p></div>
-        <div className="update-policy-control">
+        <div className="update-policy-block">
           <Select value={settings.updatePolicy} onValueChange={(value) => { if (value) onSettingsChange({ ...settings, updatePolicy: value as UpdatePolicy }); }}>
-            <SelectTrigger className="update-policy-select" aria-label="更新策略"><SelectValue>{policyLabel(settings.updatePolicy)}</SelectValue></SelectTrigger>
-            <SelectContent className="update-policy-select-content">
+            <SelectTrigger className="update-policy-select-trigger" aria-label="更新策略"><SelectValue>{policyLabel(settings.updatePolicy)}</SelectValue></SelectTrigger>
+            <SelectContent>
               {Object.keys(policyDescriptions).map((policy) => <SelectItem key={policy} value={policy}>{policyLabel(policy as UpdatePolicy)}</SelectItem>)}
             </SelectContent>
           </Select>
