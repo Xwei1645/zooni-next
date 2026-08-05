@@ -8,7 +8,7 @@
   --font-heading: var(--app-font-sans);
   --font-sans: var(--app-font-sans);
 
-  /* Radius scale (design-system §2): 控件/弹层/菜单项统一 10px，卡片统一 20px */
+  /* Radius scale (design-system §2): 控件/菜单项/弹层 10px，卡片 12px，胶囊 pill */
   --radius-xs: 0.125rem;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
@@ -58,13 +58,13 @@
   --color-foreground: var(--foreground);
   --color-background: var(--background);
 
-    /* Shadow scale (design tokens §4) */
-    --shadow-xs: 0 1px 2px color-mix(in oklch, oklch(0 0 0) 8%, transparent);
-    --shadow-sm: 0 2px 8px color-mix(in oklch, oklch(0 0 0) 10%, transparent);
-    --shadow-md: 0 4px 16px color-mix(in oklch, oklch(0 0 0) 12%, transparent);
-    --shadow-lg: 0 12px 32px color-mix(in oklch, oklch(0 0 0) 16%, transparent);
-    --shadow-xl: 0 16px 48px color-mix(in oklch, oklch(0 0 0) 22%, transparent);
-    --shadow-2xl: 0 24px 64px color-mix(in oklch, oklch(0 0 0) 28%, transparent);
+  /* Shadow scale (design tokens §4) */
+  --shadow-xs: 0 1px 2px color-mix(in oklch, oklch(0 0 0) 8%, transparent);
+  --shadow-sm: 0 2px 8px color-mix(in oklch, oklch(0 0 0) 10%, transparent);
+  --shadow-md: 0 4px 16px color-mix(in oklch, oklch(0 0 0) 12%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in oklch, oklch(0 0 0) 16%, transparent);
+  --shadow-xl: 0 16px 48px color-mix(in oklch, oklch(0 0 0) 22%, transparent);
+  --shadow-2xl: 0 24px 64px color-mix(in oklch, oklch(0 0 0) 28%, transparent);
 
   /* Motion (design tokens §6) */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -81,18 +81,17 @@
 
   /* -- Radius (design tokens §2) */
   --radius: 0.625rem;
-  --radius-tool: var(--radius-sm);
   --radius-control: var(--radius-lg);
   --radius-item: var(--radius-lg);
   --radius-popover: var(--radius-lg);
   --radius-card: var(--radius-4xl);
   --radius-pill: 999px;
 
-    /* -- Shadow semantics (design tokens §4) */
-    --shadow-control: 0 2px 8px color-mix(in oklch, oklch(0 0 0) 10%, transparent);
-    --shadow-panel: 0 12px 28px color-mix(in oklch, oklch(0 0 0) 16%, transparent);
-    --shadow-dialog: 0 16px 48px color-mix(in oklch, oklch(0 0 0) 22%, transparent);
-    --shadow-drawer: -12px 0 32px color-mix(in oklch, oklch(0 0 0) 15%, transparent);
+  /* -- Shadow semantics (design tokens §4) */
+  --shadow-control: 0 2px 8px color-mix(in oklch, oklch(0 0 0) 10%, transparent);
+  --shadow-panel: 0 12px 32px color-mix(in oklch, oklch(0 0 0) 16%, transparent);
+  --shadow-dialog: 0 16px 48px color-mix(in oklch, oklch(0 0 0) 22%, transparent);
+  --shadow-drawer: -12px 0 32px color-mix(in oklch, oklch(0 0 0) 15%, transparent);
 
   /* -- Spacing scale (design tokens --space-*) */
   --space-1: 0.25rem;

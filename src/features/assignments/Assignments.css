@@ -251,9 +251,6 @@
   background: var(--card);
   box-shadow: var(--shadow-panel);
   color: var(--card-foreground);
-}
-
-.assignment-composer {
   animation: assignment-composer-in var(--duration-slow) var(--ease-out);
 }
 
@@ -515,5 +512,4 @@
   .assignments-board {
     padding: var(--space-7) var(--space-4) 88px;
   }
-
 }
