@@ -171,6 +171,7 @@ Dark 同谱提亮。
 ## 7. 通用约定
 
 - **焦点环**：统一 `ring`（`ring-3 ring-ring/30`；`scroll-area` 用 `ring-ring/50`），自定义可聚焦元素用 `box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent)`。
+- **ScrollArea 焦点**：`ui/scroll-area` 提供 `focusable` prop（默认 `true`，`false` 时 viewport 设 `tabIndex={-1}`）；设置窗口（`OptionsWindow`）传 `focusable={false}`，避免 Tab 聚焦整个滚动面板（导航栏与内容之间的焦点环被误判为「分割线选中」）。
 - **玻璃表面配方**：卡片 `background: color-mix(in oklch, var(--card) calc(var(--card-background-opacity) * 100%), transparent); backdrop-filter: blur(12px)`；浮空 dock / 菜单浮层 `blur(16px)` + `popover 92%`。
 - **输入框/选择器 = 有边框矩形**：`border: 1px solid var(--border)` + `background: var(--background)`，10px 圆角（`--radius-control`）。
 - **主按钮**：`default` 变体带 `shadow-sm`、悬停 `shadow-md` 微浮起；圆形 dock 添加键按下呈 `scale(0.96)`。
@@ -194,7 +195,7 @@ Dark 同谱提亮。
 | 开关 / 滑块（`ui/switch` / `ui/slider`） | 胶囊 `rounded-full`；选中态 primary；thumb 白底 + `shadow-md` |
 | 菜单（`ui/dropdown-menu`） | content `bg-popover` + `--radius-popover` + `shadow-lg`；item `--radius-item` |
 | 标题栏（三窗口统一） | 40px 高、`border-bottom: var(--border)`、`color-mix(primary 5%, background)` 品牌淡染；拖拽区图标 15px `--muted-foreground` |
-| 设置分区（`.settings-section`） | `--radius-card` + `bg-card` + `padding: 16px 24px`，**无边框无阴影**；分区用 8px 卡片间距代替分隔线 |
+| 设置分区（`.settings-section`） | `--radius-card` + `bg-card` + `padding: 16px 24px`，**无边框无阴影**；分区用 8px 卡片间距代替分隔线；选项行布局见第 9 章 |
 | 编辑面板（`.assignment-composer`） | 宽 680px、`--radius-card` + `bg-card` + `--shadow-panel`；工具栏 / 底部条 48px 高，用 `color-mix(card 93%, fg)` 背景色与正文区分（**无分割线**）；正文区 224px 起 |
 | 编辑器工具 | 工具键 `--radius-control`；字号输入 48×32 无边框透明、聚焦 ring；富文本工具与字号之间**无分隔符** |
 | 编辑面板确认键 | 36×36、`--radius-control`（与左侧科目 select 同高）；科目 select 用默认有边框矩形并 `max-width: none` 撑满 |
@@ -204,9 +205,39 @@ Dark 同谱提亮。
 
 ---
 
-## 9. 现状 → Token 变更映射表（历史）
+## 9. 设置窗口选项行布局（`.settings-option-row`）
 
-> 以下为历次落地记录，仅作追溯。当前实现一律以第 1–8 章为准。
+> 设置窗口（`OptionsWindow`）中所有「标题 + 控件」型选项行的统一响应式布局规范。实现位于 `src/windows/OptionsWindow.css`、`src/features/settings/*Settings.tsx`。
+
+### 9.1 行模型（网格，非 flex-wrap）
+
+- 每行用共享 `.settings-option-row`：`display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, auto)`。左列放 `.settings-field-heading`（标题 + 说明），右列放控件。
+- 左列 `.settings-option-row > .settings-field-heading { min-width: 0 }`，宽度优先收缩 → 说明文字先换行，控件尽量保持在同列同宽。
+- 控件统一加 `.settings-option-control`（`justify-self: end; min-width: 0; max-width: 100%`），宽时靠右。
+
+### 9.2 同步的断点切换（对齐与换行同一事件）
+
+- `container-type: inline-size` 放在 **`.settings-panel`（公共祖先）** 上，而非各行本身。
+- 单个 `@container (max-width: 26rem)` 同时完成两件事，保证**对齐与换行始终同步**：
+  1. `.settings-option-row { grid-template-columns: minmax(0, 1fr) }` —— 折叠为单列（即「换行」，行高自动增加）。
+  2. `.settings-option-control { justify-self: start }` —— 控件由右对齐切为左对齐。
+- 不要用「行自身的 `container-type` + 固定宽度 `@container`」去切内部对齐：容器的换行是内容驱动的，而行内容器查询是宽度驱动，二者会不同步（曾导致窄屏时控件已换行却仍右对齐）。
+
+### 9.3 更新策略行（select + 说明整体）
+
+- `.settings-update-policy-row { grid-template-columns: minmax(0, auto) minmax(0, 1fr) }`：标题列按内容宽，`.update-policy-block` 占满剩余列 → 说明文字可占满宽度成单行（不受 select 宽度限制）。
+- `.update-policy-block { justify-items: end }` 将 select 与下方说明作为**整体**靠右；窄屏 `@container` 内 `.update-policy-block { justify-items: start }` + `.update-policy-description { text-align: left }` 整体左对齐，二者始终一同移动。
+
+### 9.4 固定宽度约定（避免内容/数值跳动）
+
+- 字体 select `.font-select`：固定 `16rem`（`width / min / max` 一致），不受所选字体名长度影响。
+- 背景不透明度数值 `.opacity-value`：固定 `flex: 0 0 3rem; width: 3rem` + `tabular-nums`，数值位数变化（如 5%↔100%）时宽度恒定不跳动。
+
+---
+
+## 10. 现状 → Token 变更映射表（历史）
+
+> 以下为历次的历史条目，仅作追溯。当前实现一律以第 1–9 章为准。
 
 | 位置 | 现状 | 新 Token |
 | --- | --- | --- |
