@@ -15,15 +15,18 @@ const packageJsonPath = resolve(rootDir, "package.json")
 const cargoTomlPath = resolve(rootDir, "src-tauri", "Cargo.toml")
 const tauriConfPath = resolve(rootDir, "src-tauri", "tauri.conf.json")
 
-function run(command, args) {
+function run(command, args, options = {}) {
   const useShell = process.platform === "win32" && command === "pnpm"
+  const capture = options.capture !== false
 
-  return execFileSync(command, args, {
+  const result = execFileSync(command, args, {
     cwd: rootDir,
     encoding: "utf8",
     shell: useShell,
-    stdio: ["inherit", "pipe", "inherit"],
-  }).trim()
+    stdio: capture ? ["inherit", "pipe", "inherit"] : "inherit",
+  })
+
+  return capture && result ? result.trim() : result
 }
 
 function requireCleanWorktree() {
@@ -70,7 +73,7 @@ try {
   )
   writeFileSync(cargoTomlPath, cargoToml)
 
-  run("cargo", ["metadata", "--format-version", "1", "--manifest-path", "src-tauri/Cargo.toml"])
+  run("cargo", ["metadata", "--format-version", "1", "--manifest-path", "src-tauri/Cargo.toml"], { capture: false })
 
   const tauriConf = JSON.parse(readFileSync(tauriConfPath, "utf8"))
   tauriConf.version = version
