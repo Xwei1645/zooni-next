@@ -23,7 +23,7 @@ function run(command, args, options = {}) {
     cwd: rootDir,
     encoding: "utf8",
     shell: useShell,
-    stdio: capture ? ["inherit", "pipe", "inherit"] : "inherit",
+    stdio: capture ? ["inherit", "pipe", "inherit"] : ["inherit", "ignore", "inherit"],
   })
 
   return capture && result ? result.trim() : result
