@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Zooni Next",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "identifier": "io.github.xwei1645.zooni-next",
   "build": {
     "beforeDevCommand": "pnpm dev",
