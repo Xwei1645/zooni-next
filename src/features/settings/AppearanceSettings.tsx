@@ -70,12 +70,12 @@ export function AppearanceSettings({
       <div className="settings-panel-header">
         <h2 id="appearance-title">外观</h2>
       </div>
-      <div className="settings-section settings-appearance-row">
+      <div className="settings-section settings-option-row">
         <div className="settings-field-heading">
           <h3>明暗模式</h3>
           <p>选择应用使用的颜色主题。</p>
         </div>
-        <ButtonGroup className="appearance-options" aria-label="明暗模式">
+        <ButtonGroup className="settings-option-control appearance-options" aria-label="明暗模式">
           <Button
             type="button"
             variant="outline"
@@ -114,7 +114,7 @@ export function AppearanceSettings({
           </Button>
         </ButtonGroup>
       </div>
-      <div className="settings-section settings-font-row">
+      <div className="settings-section settings-option-row">
         <div className="settings-field-heading">
           <div className="settings-field-title">
             <h3>字体</h3>
@@ -137,7 +137,7 @@ export function AppearanceSettings({
           }}
         >
           <SelectTrigger
-            className="font-select"
+            className="font-select settings-option-control"
             aria-label="字体"
             disabled={fontsLoading}
             style={{ fontFamily: fontFamilyStack(settings.fontFamily) }}
@@ -165,12 +165,12 @@ export function AppearanceSettings({
           </SelectContent>
         </Select>
       </div>
-      <div className="settings-section settings-opacity-row">
+      <div className="settings-section settings-option-row">
         <div className="settings-field-heading">
           <h3>背景不透明度</h3>
           <p>调整主窗口背景的不透明程度。</p>
         </div>
-        <div className="opacity-control">
+        <div className="settings-option-control opacity-control">
           <Slider
             className="opacity-slider"
             min={0}
@@ -188,12 +188,12 @@ export function AppearanceSettings({
           <output className="opacity-value">{backgroundOpacity}%</output>
         </div>
       </div>
-      <div className="settings-section settings-window-animation-row">
+      <div className="settings-section settings-option-row">
         <div className="settings-field-heading">
           <h3>窗口缩放动画</h3>
           <p>控制主窗口全屏和收起时的是否显示缩放动画。</p>
         </div>
-        <Switch
+        <Switch className="settings-option-control"
           checked={settings.windowAnimation}
           aria-label="窗口缩放动画"
           onCheckedChange={() =>
@@ -204,12 +204,12 @@ export function AppearanceSettings({
           }
         />
       </div>
-      <div className="settings-section settings-taskbar-icon-row">
+      <div className="settings-section settings-option-row">
         <div className="settings-field-heading">
           <h3>隐藏任务栏图标</h3>
           <p>隐藏主窗口在系统任务栏中的图标。</p>
         </div>
-        <Switch
+        <Switch className="settings-option-control"
           checked={settings.hideTaskbarIcon}
           aria-label="隐藏任务栏图标"
           onCheckedChange={() =>

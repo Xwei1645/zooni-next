@@ -166,7 +166,7 @@ export function OptionsWindow() {
             关于
           </Button>
         </nav>
-        <ScrollArea key={activeSection} className="settings-panel-scroll-area">
+        <ScrollArea key={activeSection} className="settings-panel-scroll-area" focusable={false}>
           {activeSection === "appearance" && settings && (
             <AppearanceSettings
               settings={settings}

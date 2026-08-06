@@ -7,10 +7,12 @@ function ScrollArea({
   children,
   horizontal = false,
   verticalScrollbarClassName,
+  focusable = true,
   ...props
 }: ScrollAreaPrimitive.Root.Props & {
   horizontal?: boolean
   verticalScrollbarClassName?: string
+  focusable?: boolean
 }) {
   return (
     <ScrollAreaPrimitive.Root
@@ -20,6 +22,7 @@ function ScrollArea({
     >
       <ScrollAreaPrimitive.Viewport
         data-slot="scroll-area-viewport"
+        tabIndex={focusable ? undefined : -1}
         className="size-full max-h-[inherit] rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1"
       >
         {children}

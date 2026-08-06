@@ -53,9 +53,9 @@ export function UpdateSettings({ settings, onSettingsChange }: UpdateSettingsPro
           <Button type="button" variant="outline" size="sm" disabled={isWorking} onClick={() => run(checkForUpdate, "updater.check")}><RefreshCw aria-hidden="true" />检查更新</Button>
         </div>
       </section>
-      <section className="settings-section settings-update-policy-row">
+      <section className="settings-section settings-option-row settings-update-policy-row">
         <div className="settings-field-heading"><h3>更新策略</h3><p>设置应用何时自动检查更新。</p></div>
-        <div className="update-policy-block">
+        <div className="settings-option-control update-policy-block">
           <Select value={settings.updatePolicy} onValueChange={(value) => { if (value) onSettingsChange({ ...settings, updatePolicy: value as UpdatePolicy }); }}>
             <SelectTrigger className="update-policy-select-trigger" aria-label="更新策略"><SelectValue>{policyLabel(settings.updatePolicy)}</SelectValue></SelectTrigger>
             <SelectContent>

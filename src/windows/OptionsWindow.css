@@ -118,6 +118,7 @@
 .settings-panel {
   background: var(--background);
   padding: var(--space-7) var(--space-8);
+  container-type: inline-size;
 }
 
 .settings-panel-header {
@@ -173,23 +174,22 @@
   }
 }
 
-.appearance-options {
-  flex: 0 1 auto;
-  max-width: 100%;
-  margin-left: auto;
-}
-
-.appearance-options svg {
-  width: 15px;
-  height: 15px;
-}
-
-.settings-appearance-row {
-  display: flex;
+.settings-option-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-6);
+  column-gap: var(--space-6);
+  row-gap: var(--space-3);
+}
+
+.settings-option-row > .settings-field-heading {
+  min-width: 0;
+}
+
+.settings-option-row > .settings-option-control {
+  justify-self: end;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .appearance-option-active,
@@ -199,31 +199,20 @@
   background-color: color-mix(in oklch, var(--primary) 10%, transparent);
 }
 
-.settings-font-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-6);
+.appearance-options svg {
+  width: 15px;
+  height: 15px;
 }
 
 .font-select {
-  flex: 0 1 14rem;
-  width: 14rem;
-  max-width: 100%;
-}
-
-.settings-opacity-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-6);
+  flex: 0 0 16rem;
+  width: 16rem;
+  min-width: 16rem;
+  max-width: 16rem;
 }
 
 .opacity-control {
   display: flex;
-  flex: 0 1 16rem;
   width: 16rem;
   max-width: 100%;
   align-items: center;
@@ -236,19 +225,12 @@
 }
 
 .opacity-value {
+  flex: 0 0 3rem;
+  width: 3rem;
   color: var(--muted-foreground);
   font-size: var(--text-note);
   font-variant-numeric: tabular-nums;
   text-align: right;
-}
-
-.settings-window-animation-row,
-.settings-taskbar-icon-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-6);
 }
 
 .about-panel {
@@ -296,29 +278,24 @@
 }
 
 .settings-update-policy-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-6);
-  container-type: inline-size;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
 }
 
 .update-policy-block {
-  display: flex;
-  flex: 0 0 auto;
-  min-width: 14rem;
-  max-width: 100%;
-  flex-direction: column;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: end;
+  width: 100%;
 }
 
 .update-policy-select-trigger {
-  width: 14rem;
-  max-width: 100%;
+  width: auto;
+  min-width: 10rem;
+  max-width: 16rem;
 }
 
 .update-policy-description {
+  width: 100%;
   margin: 6px 0 0;
   color: var(--muted-foreground);
   font-size: var(--text-caption);
@@ -326,9 +303,17 @@
   text-align: right;
 }
 
-@container (max-width: 25rem) {
+@container (max-width: 26rem) {
+  .settings-option-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-option-row > .settings-option-control {
+    justify-self: start;
+  }
+
   .update-policy-block {
-    align-items: flex-start;
+    justify-items: start;
   }
 
   .update-policy-description {
