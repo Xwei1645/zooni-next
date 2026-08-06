@@ -3,9 +3,6 @@
   min-width: 100%;
   min-height: 100vh;
   padding: var(--space-10) var(--space-6) 96px;
-  background:
-    radial-gradient(48rem 48rem at 88% -12%, color-mix(in oklch, var(--primary) 9%, transparent), transparent 62%),
-    radial-gradient(40rem 40rem at -8% 108%, color-mix(in oklch, var(--info) 6%, transparent), transparent 60%);
 }
 
 .assignments-scroll-area {
