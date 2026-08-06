@@ -5,7 +5,9 @@ import { listen } from "@tauri-apps/api/event";
 import type { UpdatePolicy } from "@/lib/appearance";
 import { logError } from "@/lib/logger";
 
-export type UpdateStatus = "idle" | "checking" | "upToDate" | "available" | "failed";
+export type UpdateStatus = "idle" | "checking" | "upToDate" | "available" | "downloading" | "downloaded" | "installing" | "failed";
+
+export type UpdateErrorKind = "check" | "download" | "signature" | "install" | "cache";
 
 export interface UpdateSnapshot {
   status: UpdateStatus;
@@ -13,10 +15,12 @@ export interface UpdateSnapshot {
   availableVersion?: string;
   notes?: string;
   lastCheckedAt?: string;
+  errorKind?: UpdateErrorKind;
   error?: string;
 }
 
 export const checkForUpdate = () => invoke("check_for_update");
+export const installUpdate = () => invoke("install_update");
 export const applyUpdatePolicy = (policy: UpdatePolicy) => invoke("apply_update_policy", { policy });
 
 export function useUpdateSnapshot() {

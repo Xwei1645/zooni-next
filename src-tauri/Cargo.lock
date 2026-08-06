@@ -5515,9 +5515,12 @@ checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
 name = "zooni-next"
 version = "0.2.0"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "font-kit",
  "log",
+ "minisign-verify",
+ "semver",
  "serde",
  "serde_json",
  "tauri",
@@ -5525,6 +5528,7 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-opener",
  "tauri-plugin-updater",
+ "tokio",
  "uuid",
 ]
 

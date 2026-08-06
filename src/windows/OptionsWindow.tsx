@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Toaster } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,6 +20,7 @@ import { UpdateSettings } from "@/features/settings/UpdateSettings";
 import { type AppSettings } from "@/lib/appearance";
 import { logError } from "@/lib/logger";
 import { updateAppSettings, useWindowSettings } from "@/lib/settings";
+import { useUpdateSnapshot } from "@/lib/updater";
 
 import "./OptionsWindow.css";
 
@@ -28,6 +28,7 @@ export function OptionsWindow() {
   const [isMaximized, setIsMaximized] = useState(false);
   const [activeSection, setActiveSection] = useState<"appearance" | "update" | "about">("appearance");
   const settings = useWindowSettings();
+  const updateSnapshot = useUpdateSnapshot();
   const readySignaled = useRef(false);
 
   useEffect(() => {
@@ -174,12 +175,15 @@ export function OptionsWindow() {
             />
           )}
           {activeSection === "update" && settings && (
-            <UpdateSettings settings={settings} onSettingsChange={handleSettingsChange} />
+            <UpdateSettings
+              settings={settings}
+              snapshot={updateSnapshot}
+              onSettingsChange={handleSettingsChange}
+            />
           )}
           {activeSection === "about" && <AboutSettings />}
         </ScrollArea>
       </div>
-      <Toaster position="bottom-right" richColors theme={settings?.appearance ?? "system"} />
     </main>
   );
 }

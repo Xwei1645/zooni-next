@@ -4,6 +4,7 @@ mod fonts;
 mod settings;
 mod subjects;
 mod updater;
+mod verification;
 mod window_state;
 mod windows;
 
@@ -50,7 +51,7 @@ pub fn run() {
             let settings = settings::AppSettingsState::load(&app.handle());
             settings.apply_main_window_taskbar_visibility(&app.handle())?;
             app.manage(settings);
-            app.manage(updater::UpdateState::new(&app.handle()));
+            app.manage(updater::UpdateState::load(&app.handle()));
             app.manage(subjects::SubjectState::load(&app.handle()));
             app.manage(assignments::AssignmentState::load(&app.handle()));
             windows::preload_options_window(&app.handle())?;
@@ -76,6 +77,7 @@ pub fn run() {
             window_state::update_main_window_collapsed_y,
             updater::get_update_snapshot,
             updater::check_for_update,
+            updater::install_update,
             updater::apply_update_policy,
             exit_app,
             windows::open_options_window,

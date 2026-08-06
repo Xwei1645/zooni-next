@@ -25,10 +25,12 @@ pub enum Appearance {
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub enum UpdatePolicy {
     Disabled,
     Notify,
+    AutoDownload,
+    AutoInstall,
 }
 
 #[derive(Clone, Deserialize, PartialEq, Eq, Serialize)]
@@ -272,7 +274,7 @@ mod tests {
 
     #[test]
     fn accepts_all_update_policies() {
-        for policy in ["disabled", "notify"] {
+        for policy in ["disabled", "notify", "autoDownload", "autoInstall"] {
             let settings = serde_json::from_str::<AppSettings>(&format!(
                 r#"{{"appearance":"light","fontFamily":"Inter","updatePolicy":"{policy}"}}"#,
             ));

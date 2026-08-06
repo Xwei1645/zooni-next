@@ -1,6 +1,6 @@
 export type Appearance = "system" | "light" | "dark";
 export type FontFamily = string;
-export type UpdatePolicy = "disabled" | "notify";
+export type UpdatePolicy = "disabled" | "notify" | "autoDownload" | "autoInstall";
 
 export const DEFAULT_FONT_FAMILY = "__default__";
 
