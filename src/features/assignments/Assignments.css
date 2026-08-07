@@ -40,6 +40,28 @@
   min-width: 100%;
 }
 
+.assignment-empty-state {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-4);
+  min-height: calc(100vh - var(--space-10) - 96px);
+  padding: var(--space-6);
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.assignment-empty-state-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--primary);
+}
+
+.assignment-empty-state-text {
+  margin: 0;
+  font-size: var(--text-subtitle);
+}
+
 .assignment-subject-groups {
   position: relative;
   width: 100%;

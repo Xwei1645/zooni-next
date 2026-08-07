@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { Inbox } from "lucide-react";
 
 import type { Assignment } from "@/lib/assignments";
 import type { Subject } from "@/lib/subjects";
@@ -721,6 +722,12 @@ export function AssignmentsBoard({
       style={{ "--assignment-content-zoom": String(effectiveContentZoom) } as CSSProperties}
       aria-label="作业"
     >
+      {groups.length === 0 ? (
+        <div className="assignment-empty-state" role="status">
+          <Inbox className="assignment-empty-state-icon" aria-hidden="true" />
+          <p className="assignment-empty-state-text">什么作业也没有……真是太好了！</p>
+        </div>
+      ) : null}
       <div
         className="assignment-subject-groups"
         ref={canvasRef}
