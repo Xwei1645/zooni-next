@@ -423,7 +423,6 @@ export function AssignmentsBoard({
   const effectiveColumnCount = autoColumnCount
     ? automaticLayout.columnCount
     : columnCount;
-  const availableHeight = Math.max(200, (viewportHeight || window.innerHeight) - 132);
   const automaticLayoutInput = [
     groupsKey,
     canvasWidth,
@@ -543,6 +542,15 @@ export function AssignmentsBoard({
     }
 
     previousAutomaticLayoutInput.current = automaticLayoutInput;
+
+    const board = canvasRef.current?.closest<HTMLElement>(".assignments-board");
+    const boardStyle = board ? window.getComputedStyle(board) : null;
+    const availableHeight = Math.max(
+      200,
+      (viewportHeight || window.innerHeight)
+        - (boardStyle ? parseFloat(boardStyle.paddingTop) : 0)
+        - (boardStyle ? parseFloat(boardStyle.paddingBottom) : 0),
+    );
 
     const next = solveAutomaticLayout({
       autoColumnCount,

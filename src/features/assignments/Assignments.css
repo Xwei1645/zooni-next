@@ -1,8 +1,10 @@
 .assignments-board {
+  --assignments-top-pad: var(--space-10);
+  --assignments-bottom-pad: 96px;
   box-sizing: border-box;
   min-width: 100%;
   min-height: 100vh;
-  padding: var(--space-10) var(--space-6) 96px;
+  padding: var(--assignments-top-pad) var(--space-6) var(--assignments-bottom-pad);
 }
 
 .assignments-scroll-area {
@@ -46,7 +48,7 @@
   place-items: center;
   align-content: center;
   gap: var(--space-4);
-  min-height: calc(100vh - var(--space-10) - 96px);
+  min-height: calc(100vh - var(--assignments-top-pad) - var(--assignments-bottom-pad));
   padding: var(--space-6);
   color: var(--muted-foreground);
   text-align: center;
@@ -530,6 +532,8 @@
 
 @media (max-width: 640px) {
   .assignments-board {
-    padding: var(--space-7) var(--space-4) 88px;
+    --assignments-top-pad: var(--space-7);
+    --assignments-bottom-pad: 88px;
+    padding: var(--assignments-top-pad) var(--space-4) var(--assignments-bottom-pad);
   }
 }
