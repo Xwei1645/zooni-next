@@ -9,12 +9,14 @@ use std::{
 use log::error;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
+use tauri_plugin_autostart::ManagerExt;
 
 const SETTINGS_FILE_NAME: &str = "settings.json";
 const PERSIST_DELAY: Duration = Duration::from_millis(500);
 const DEFAULT_BACKGROUND_OPACITY: u8 = 100;
 const DEFAULT_WINDOW_ANIMATION: bool = true;
 const DEFAULT_HIDE_TASKBAR_ICON: bool = true;
+const DEFAULT_LAUNCH_AT_STARTUP: bool = false;
 
 #[derive(Clone, Copy, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -38,12 +40,10 @@ pub enum UpdatePolicy {
 pub struct AppSettings {
     appearance: Appearance,
     font_family: String,
-    #[serde(default = "default_background_opacity")]
     background_opacity: u8,
-    #[serde(default = "default_window_animation")]
     window_animation: bool,
-    #[serde(default = "default_hide_taskbar_icon")]
     hide_taskbar_icon: bool,
+    launch_at_startup: bool,
     pub update_policy: UpdatePolicy,
 }
 
@@ -61,21 +61,10 @@ impl Default for AppSettings {
             background_opacity: DEFAULT_BACKGROUND_OPACITY,
             window_animation: DEFAULT_WINDOW_ANIMATION,
             hide_taskbar_icon: DEFAULT_HIDE_TASKBAR_ICON,
+            launch_at_startup: DEFAULT_LAUNCH_AT_STARTUP,
             update_policy: UpdatePolicy::Notify,
         }
     }
-}
-
-fn default_background_opacity() -> u8 {
-    DEFAULT_BACKGROUND_OPACITY
-}
-
-fn default_window_animation() -> bool {
-    DEFAULT_WINDOW_ANIMATION
-}
-
-fn default_hide_taskbar_icon() -> bool {
-    DEFAULT_HIDE_TASKBAR_ICON
 }
 
 #[derive(Clone, Serialize)]
@@ -103,7 +92,7 @@ impl AppSettingsState {
             }
         };
 
-        let settings = path
+        let mut settings = path
             .as_deref()
             .and_then(|path| load_settings(path).ok())
             .unwrap_or_else(|| {
@@ -117,6 +106,14 @@ impl AppSettingsState {
 
                 defaults
             });
+
+        settings.launch_at_startup = match app.autolaunch().is_enabled() {
+            Ok(enabled) => enabled,
+            Err(error) => {
+                error!("failed to read autostart state: {error}");
+                settings.launch_at_startup
+            }
+        };
 
         Self(Arc::new(SettingsStore {
             snapshot: Mutex::new(AppSettingsSnapshot {
@@ -189,6 +186,7 @@ pub fn update_app_settings(
     settings: AppSettings,
 ) -> Result<AppSettingsSnapshot, String> {
     set_main_window_skip_taskbar(&app, settings.hide_taskbar_icon)?;
+    apply_launch_at_startup(&app, settings.launch_at_startup)?;
     let snapshot = state.update(settings)?;
 
     if let Err(error) = app.emit("settings-changed", snapshot.clone()) {
@@ -197,6 +195,21 @@ pub fn update_app_settings(
 
     state.schedule_persist(snapshot.revision);
     Ok(snapshot)
+}
+
+fn apply_launch_at_startup(app: &AppHandle, launch_at_startup: bool) -> Result<(), String> {
+    let autostart = app.autolaunch();
+    let enabled = autostart.is_enabled().map_err(|error| error.to_string())?;
+
+    if enabled == launch_at_startup {
+        return Ok(());
+    }
+
+    if launch_at_startup {
+        autostart.enable().map_err(|error| error.to_string())
+    } else {
+        autostart.disable().map_err(|error| error.to_string())
+    }
 }
 
 fn set_main_window_skip_taskbar(app: &AppHandle, skip_taskbar: bool) -> Result<(), String> {
@@ -239,45 +252,47 @@ fn settings_path(app: &AppHandle) -> Result<PathBuf, String> {
 mod tests {
     use super::AppSettings;
 
+    fn full_settings_json(policy: &str) -> String {
+        format!(
+            r#"{{"appearance":"light","fontFamily":"Inter","backgroundOpacity":80,"windowAnimation":true,"hideTaskbarIcon":true,"launchAtStartup":false,"updatePolicy":"{policy}"}}"#,
+        )
+    }
+
     #[test]
     fn rejects_invalid_settings_content() {
         assert!(serde_json::from_str::<AppSettings>(
-            r#"{"appearance":"violet","fontFamily":"Inter"}"#,
+            r#"{"appearance":"violet","fontFamily":"Inter","backgroundOpacity":80,"windowAnimation":true,"hideTaskbarIcon":true,"launchAtStartup":false,"updatePolicy":"notify"}"#,
         )
         .is_err());
         assert!(serde_json::from_str::<AppSettings>(
-            r#"{"appearance":"light","fontFamily":"Inter","unexpected":true}"#,
+            r#"{"appearance":"light","fontFamily":"Inter","backgroundOpacity":80,"windowAnimation":true,"hideTaskbarIcon":true,"launchAtStartup":false,"updatePolicy":"notify","unexpected":true}"#,
         )
         .is_err());
     }
 
     #[test]
     fn rejects_blank_font_family() {
-        let settings = serde_json::from_str::<AppSettings>(
-            r#"{"appearance":"light","fontFamily":"   ","updatePolicy":"notify"}"#,
-        )
+        let settings = serde_json::from_str::<AppSettings>(&full_settings_json("notify").replace(
+            "\"fontFamily\":\"Inter\"",
+            "\"fontFamily\":\"   \"",
+        ))
         .expect("settings should deserialize before semantic validation");
 
         assert!(!settings.is_valid());
     }
 
     #[test]
-    fn defaults_missing_background_opacity() {
-        let settings = serde_json::from_str::<AppSettings>(
-            r#"{"appearance":"light","fontFamily":"Inter","updatePolicy":"notify"}"#,
+    fn rejects_missing_required_fields() {
+        assert!(serde_json::from_str::<AppSettings>(
+            r#"{"appearance":"light","fontFamily":"Inter"}"#,
         )
-        .expect("settings should deserialize before semantic validation");
-
-        assert_eq!(settings.background_opacity, 100);
-        assert!(settings.window_animation);
+        .is_err());
     }
 
     #[test]
     fn accepts_all_update_policies() {
         for policy in ["disabled", "notify", "autoDownload", "autoInstall"] {
-            let settings = serde_json::from_str::<AppSettings>(&format!(
-                r#"{{"appearance":"light","fontFamily":"Inter","updatePolicy":"{policy}"}}"#,
-            ));
+            let settings = serde_json::from_str::<AppSettings>(&full_settings_json(policy));
             assert!(settings.is_ok(), "expected {policy} to be valid");
         }
     }

@@ -17,6 +17,23 @@ export function GeneralSettings({
       </div>
       <div className="settings-section settings-option-row">
         <div className="settings-field-heading">
+          <h3>开机自启动</h3>
+          <p>在开启计算机时自动打开应用。</p>
+        </div>
+        <Switch
+          className="settings-option-control"
+          checked={settings.launchAtStartup}
+          aria-label="开机自启动"
+          onCheckedChange={() =>
+            onSettingsChange({
+              ...settings,
+              launchAtStartup: !settings.launchAtStartup,
+            })
+          }
+        />
+      </div>
+      <div className="settings-section settings-option-row">
+        <div className="settings-field-heading">
           <h3>隐藏任务栏图标</h3>
           <p>隐藏主窗口在系统任务栏中的图标。</p>
         </div>

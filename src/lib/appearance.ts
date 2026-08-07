@@ -10,6 +10,7 @@ export interface AppSettings {
   backgroundOpacity: number;
   windowAnimation: boolean;
   hideTaskbarIcon: boolean;
+  launchAtStartup: boolean;
   updatePolicy: UpdatePolicy;
 }
 
@@ -19,6 +20,7 @@ export const defaultSettings: AppSettings = {
   backgroundOpacity: 100,
   windowAnimation: true,
   hideTaskbarIcon: true,
+  launchAtStartup: false,
   updatePolicy: "notify",
 };
 
