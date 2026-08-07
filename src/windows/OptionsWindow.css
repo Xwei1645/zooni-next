@@ -204,6 +204,18 @@
   height: 15px;
 }
 
+.window-level-option-active,
+.window-level-option-active:hover {
+  border-color: color-mix(in oklch, var(--primary) 35%, transparent);
+  color: var(--primary);
+  background-color: color-mix(in oklch, var(--primary) 10%, transparent);
+}
+
+.window-level-options svg {
+  width: 15px;
+  height: 15px;
+}
+
 .font-select {
   flex: 0 0 16rem;
   width: 16rem;

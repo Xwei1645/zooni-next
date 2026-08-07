@@ -54,6 +54,7 @@ pub fn run() {
             app.manage(window_state);
             let settings = settings::AppSettingsState::load(&app.handle());
             settings.apply_main_window_taskbar_visibility(&app.handle())?;
+            settings.apply_main_window_level(&app.handle())?;
             app.manage(settings);
             app.manage(updater::UpdateState::load(&app.handle()));
             app.manage(subjects::SubjectState::load(&app.handle()));

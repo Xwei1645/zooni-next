@@ -587,6 +587,7 @@ function App() {
 
     const appWindow = getCurrentWindow();
     const restoreFullscreen = isFullscreenRef.current;
+    const windowLevel = settings?.windowLevel ?? "normal";
     isChangingWindow.current = true;
     normalPlacementPersistenceVersion.current += 1;
 
@@ -640,8 +641,11 @@ function App() {
       };
 
       isCollapsedRef.current = true;
-      await appWindow.setAlwaysOnTop(true);
       await appWindow.setResizable(false);
+      await Promise.allSettled([
+        appWindow.setAlwaysOnTop(windowLevel !== "bottom"),
+        appWindow.setAlwaysOnBottom(windowLevel === "bottom"),
+      ]);
       await animateWindowPlacement(appWindow, placement, collapsed, windowAnimation);
       setIsCollapsed(true);
       if (!restoreFullscreen) {
@@ -666,14 +670,22 @@ function App() {
     }
 
     const appWindow = getCurrentWindow();
+    const windowLevel = settings?.windowLevel ?? "normal";
     isChangingWindow.current = true;
     normalPlacementPersistenceVersion.current += 1;
     try {
       const collapsed = await readWindowPlacement(appWindow);
       setIsCollapsed(false);
+      await Promise.allSettled([
+        appWindow.setAlwaysOnTop(windowLevel !== "bottom"),
+        appWindow.setAlwaysOnBottom(windowLevel === "bottom"),
+      ]);
       await animateWindowPlacement(appWindow, collapsed, target.placement, windowAnimation);
       await appWindow.setResizable(true);
-      await appWindow.setAlwaysOnTop(false);
+      await Promise.allSettled([
+        appWindow.setAlwaysOnTop(windowLevel === "top"),
+        appWindow.setAlwaysOnBottom(windowLevel === "bottom"),
+      ]);
       isCollapsedRef.current = false;
       collapsedTab.current = undefined;
       if (target.restoreFullscreen) {

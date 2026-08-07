@@ -1,6 +1,7 @@
 export type Appearance = "system" | "light" | "dark";
 export type FontFamily = string;
 export type UpdatePolicy = "disabled" | "notify" | "autoDownload" | "autoInstall";
+export type WindowLevel = "top" | "normal" | "bottom";
 
 export const DEFAULT_FONT_FAMILY = "__default__";
 
@@ -11,6 +12,7 @@ export interface AppSettings {
   windowAnimation: boolean;
   hideTaskbarIcon: boolean;
   launchAtStartup: boolean;
+  windowLevel: WindowLevel;
   updatePolicy: UpdatePolicy;
 }
 
@@ -21,6 +23,7 @@ export const defaultSettings: AppSettings = {
   windowAnimation: true,
   hideTaskbarIcon: true,
   launchAtStartup: false,
+  windowLevel: "normal",
   updatePolicy: "notify",
 };
 

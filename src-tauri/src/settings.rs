@@ -35,6 +35,14 @@ pub enum UpdatePolicy {
     AutoInstall,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum WindowLevel {
+    Top,
+    Normal,
+    Bottom,
+}
+
 #[derive(Clone, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct AppSettings {
@@ -44,6 +52,7 @@ pub struct AppSettings {
     window_animation: bool,
     hide_taskbar_icon: bool,
     launch_at_startup: bool,
+    window_level: WindowLevel,
     pub update_policy: UpdatePolicy,
 }
 
@@ -62,6 +71,7 @@ impl Default for AppSettings {
             window_animation: DEFAULT_WINDOW_ANIMATION,
             hide_taskbar_icon: DEFAULT_HIDE_TASKBAR_ICON,
             launch_at_startup: DEFAULT_LAUNCH_AT_STARTUP,
+            window_level: WindowLevel::Normal,
             update_policy: UpdatePolicy::Notify,
         }
     }
@@ -148,6 +158,11 @@ impl AppSettingsState {
         set_main_window_skip_taskbar(app, settings.hide_taskbar_icon)
     }
 
+    pub fn apply_main_window_level(&self, app: &AppHandle) -> Result<(), String> {
+        let settings = self.snapshot()?.settings;
+        set_main_window_level(app, settings.window_level)
+    }
+
     fn schedule_persist(&self, revision: u64) {
         let state = self.clone();
 
@@ -187,6 +202,7 @@ pub fn update_app_settings(
 ) -> Result<AppSettingsSnapshot, String> {
     set_main_window_skip_taskbar(&app, settings.hide_taskbar_icon)?;
     apply_launch_at_startup(&app, settings.launch_at_startup)?;
+    set_main_window_level(&app, settings.window_level)?;
     let snapshot = state.update(settings)?;
 
     if let Err(error) = app.emit("settings-changed", snapshot.clone()) {
@@ -217,6 +233,29 @@ fn set_main_window_skip_taskbar(app: &AppHandle, skip_taskbar: bool) -> Result<(
         .ok_or_else(|| "Main window is unavailable".to_string())?
         .set_skip_taskbar(skip_taskbar)
         .map_err(|error| error.to_string())
+}
+
+fn set_main_window_level(app: &AppHandle, level: WindowLevel) -> Result<(), String> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "Main window is unavailable".to_string())?;
+
+    match level {
+        WindowLevel::Top => {
+            window.set_always_on_bottom(false).map_err(|error| error.to_string())?;
+            window.set_always_on_top(true).map_err(|error| error.to_string())?;
+        }
+        WindowLevel::Normal => {
+            window.set_always_on_top(false).map_err(|error| error.to_string())?;
+            window.set_always_on_bottom(false).map_err(|error| error.to_string())?;
+        }
+        WindowLevel::Bottom => {
+            window.set_always_on_top(false).map_err(|error| error.to_string())?;
+            window.set_always_on_bottom(true).map_err(|error| error.to_string())?;
+        }
+    }
+
+    Ok(())
 }
 
 fn load_settings(path: &Path) -> Result<AppSettings, String> {
@@ -254,18 +293,18 @@ mod tests {
 
     fn full_settings_json(policy: &str) -> String {
         format!(
-            r#"{{"appearance":"light","fontFamily":"Inter","backgroundOpacity":80,"windowAnimation":true,"hideTaskbarIcon":true,"launchAtStartup":false,"updatePolicy":"{policy}"}}"#,
+            r#"{{"appearance":"light","fontFamily":"Inter","backgroundOpacity":80,"windowAnimation":true,"hideTaskbarIcon":true,"launchAtStartup":false,"windowLevel":"normal","updatePolicy":"{policy}"}}"#,
         )
     }
 
     #[test]
     fn rejects_invalid_settings_content() {
         assert!(serde_json::from_str::<AppSettings>(
-            r#"{"appearance":"violet","fontFamily":"Inter","backgroundOpacity":80,"windowAnimation":true,"hideTaskbarIcon":true,"launchAtStartup":false,"updatePolicy":"notify"}"#,
+            r#"{"appearance":"violet","fontFamily":"Inter","backgroundOpacity":80,"windowAnimation":true,"hideTaskbarIcon":true,"launchAtStartup":false,"windowLevel":"normal","updatePolicy":"notify"}"#,
         )
         .is_err());
         assert!(serde_json::from_str::<AppSettings>(
-            r#"{"appearance":"light","fontFamily":"Inter","backgroundOpacity":80,"windowAnimation":true,"hideTaskbarIcon":true,"launchAtStartup":false,"updatePolicy":"notify","unexpected":true}"#,
+            r#"{"appearance":"light","fontFamily":"Inter","backgroundOpacity":80,"windowAnimation":true,"hideTaskbarIcon":true,"launchAtStartup":false,"windowLevel":"normal","updatePolicy":"notify","unexpected":true}"#,
         )
         .is_err());
     }
