@@ -398,6 +398,11 @@
   margin-top: 14px;
 }
 
+.update-changelog-scroll-area {
+  max-height: 22rem;
+  margin-top: 14px;
+}
+
 .update-notes {
   border: 1px solid var(--border);
   border-radius: var(--radius-control);

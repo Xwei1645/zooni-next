@@ -1,4 +1,4 @@
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { Download, LoaderCircle, PackageCheck, RefreshCw } from "lucide-react";
@@ -9,6 +9,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { AppSettings, UpdatePolicy } from "@/lib/appearance";
 import { logError } from "@/lib/logger";
 import { checkForUpdate, installUpdate, type UpdateSnapshot } from "@/lib/updater";
+
+import changelogMarkdown from "../../../CHANGELOG.md?raw";
+
+const markdownComponents: Components = {
+  a: ({ node: _node, ...props }) => (
+    <a {...props} target="_blank" rel="noreferrer" />
+  ),
+};
+
+function Markdown({ children }: { children: string }) {
+  return (
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+      {children}
+    </ReactMarkdown>
+  );
+}
 
 interface UpdateSettingsProps {
   settings: AppSettings;
@@ -79,23 +95,22 @@ export function UpdateSettings({ settings, snapshot, onSettingsChange }: UpdateS
       </section>
       {snapshot?.notes && (
         <section className="settings-section update-notes-section">
-          <div className="settings-field-heading"><h3>更新日志</h3></div>
+          <div className="settings-field-heading"><h3>新版本更新内容</h3></div>
           <ScrollArea className="update-notes-scroll-area" focusable={false}>
             <div className="update-notes">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  a: ({ node: _node, ...props }) => (
-                    <a {...props} target="_blank" rel="noreferrer" />
-                  ),
-                }}
-              >
-                {snapshot.notes}
-              </ReactMarkdown>
+              <Markdown>{snapshot.notes}</Markdown>
             </div>
           </ScrollArea>
         </section>
       )}
+      <section className="settings-section update-changelog-section">
+        <div className="settings-field-heading"><h3>更新日志</h3></div>
+        <ScrollArea className="update-changelog-scroll-area" focusable={false}>
+          <div className="update-notes">
+            <Markdown>{changelogMarkdown}</Markdown>
+          </div>
+        </ScrollArea>
+      </section>
     </section>
   );
 }

@@ -79,7 +79,8 @@ try {
   tauriConf.version = version
   writeFileSync(tauriConfPath, `${JSON.stringify(tauriConf, null, 2)}\n`)
 
-  run("git", ["add", "package.json", "src-tauri/Cargo.toml", "src-tauri/tauri.conf.json", "src-tauri/Cargo.lock"])
+  run("pnpm", ["exec", "git-cliff", "--tag", tag, "-o", "CHANGELOG.md"])
+  run("git", ["add", "package.json", "src-tauri/Cargo.toml", "src-tauri/tauri.conf.json", "src-tauri/Cargo.lock", "CHANGELOG.md"])
   run("git", ["commit", "-m", `chore: bump version to ${version}`])
   run("git", ["tag", "-a", tag, "-m", `${tag}`])
   run("git", ["push", "origin", "HEAD"])
