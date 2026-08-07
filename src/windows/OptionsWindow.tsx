@@ -5,6 +5,7 @@ import {
   Minus,
   Palette,
   RefreshCw,
+  Settings,
   Settings2,
   Square,
   X,
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AboutSettings } from "@/features/settings/AboutSettings";
 import { AppearanceSettings } from "@/features/settings/AppearanceSettings";
+import { GeneralSettings } from "@/features/settings/GeneralSettings";
 import { UpdateSettings } from "@/features/settings/UpdateSettings";
 import { type AppSettings } from "@/lib/appearance";
 import { logError } from "@/lib/logger";
@@ -26,7 +28,7 @@ import "./OptionsWindow.css";
 
 export function OptionsWindow() {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [activeSection, setActiveSection] = useState<"appearance" | "update" | "about">("appearance");
+  const [activeSection, setActiveSection] = useState<"general" | "appearance" | "update" | "about">("general");
   const settings = useWindowSettings();
   const updateSnapshot = useUpdateSnapshot();
   const readySignaled = useRef(false);
@@ -138,6 +140,16 @@ export function OptionsWindow() {
         <nav className="settings-nav" aria-label="设置分类">
           <Button
             type="button"
+            variant={activeSection === "general" ? "secondary" : "ghost"}
+            className="settings-nav-item"
+            aria-current={activeSection === "general" ? "page" : undefined}
+            onClick={() => setActiveSection("general")}
+          >
+            <Settings aria-hidden="true" />
+            通用
+          </Button>
+          <Button
+            type="button"
             variant={activeSection === "appearance" ? "secondary" : "ghost"}
             className="settings-nav-item"
             aria-current={activeSection === "appearance" ? "page" : undefined}
@@ -168,6 +180,12 @@ export function OptionsWindow() {
           </Button>
         </nav>
         <ScrollArea key={activeSection} className="settings-panel-scroll-area" focusable={false}>
+          {activeSection === "general" && settings && (
+            <GeneralSettings
+              settings={settings}
+              onSettingsChange={handleSettingsChange}
+            />
+          )}
           {activeSection === "appearance" && settings && (
             <AppearanceSettings
               settings={settings}
