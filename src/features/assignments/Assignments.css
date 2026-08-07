@@ -41,6 +41,7 @@
 }
 
 .assignment-empty-state {
+  box-sizing: border-box;
   display: grid;
   place-items: center;
   align-content: center;

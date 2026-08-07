@@ -727,12 +727,12 @@ export function AssignmentsBoard({
           <Inbox className="assignment-empty-state-icon" aria-hidden="true" />
           <p className="assignment-empty-state-text">什么作业也没有……真是太好了！</p>
         </div>
-      ) : null}
-      <div
-        className="assignment-subject-groups"
-        ref={canvasRef}
-        style={{ height: layout.height > 0 ? `${layout.height}px` : undefined }}
-      >
+      ) : (
+        <div
+          className="assignment-subject-groups"
+          ref={canvasRef}
+          style={{ height: layout.height > 0 ? `${layout.height}px` : undefined }}
+        >
         {groups.map((group) => {
           const placement = layout.placements.get(group.id);
           const cardColumns = placement?.cardColumns ?? 1;
@@ -788,7 +788,8 @@ export function AssignmentsBoard({
             </section>
           );
         })}
-      </div>
+        </div>
+      )}
     </section>
   );
 }
