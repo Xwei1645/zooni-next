@@ -62,6 +62,7 @@ try {
   }
 
   console.log(`Bumping version: ${packageJson.version} -> ${version}`)
+  run("pnpm", ["exec", "git-cliff", "--tag", tag, "-o", "CHANGELOG.md"])
   run("pnpm", ["build"])
 
   packageJson.version = version
@@ -79,7 +80,6 @@ try {
   tauriConf.version = version
   writeFileSync(tauriConfPath, `${JSON.stringify(tauriConf, null, 2)}\n`)
 
-  run("pnpm", ["exec", "git-cliff", "--tag", tag, "-o", "CHANGELOG.md"])
   run("git", ["add", "package.json", "src-tauri/Cargo.toml", "src-tauri/tauri.conf.json", "src-tauri/Cargo.lock", "CHANGELOG.md"])
   run("git", ["commit", "-m", `chore: bump version to ${version}`])
   run("git", ["tag", "-a", tag, "-m", `${tag}`])
