@@ -81,6 +81,16 @@ export function UpdateSettings({ settings, snapshot, onSettingsChange }: UpdateS
           )}
         </section>
       )}
+      {snapshot?.notes && snapshot.availableVersion != null && status !== "checking" && (
+        <section className="settings-section update-notes-section">
+          <div className="settings-field-heading"><h3>新版本更新内容</h3></div>
+          <ScrollArea className="update-notes-scroll-area" focusable={false}>
+            <div className="update-notes">
+              <Markdown>{snapshot.notes}</Markdown>
+            </div>
+          </ScrollArea>
+        </section>
+      )}
       <section className="settings-section settings-option-row settings-update-policy-row">
         <div className="settings-field-heading"><h3>更新策略</h3><p>设置应用何时自动检查、下载和安装更新。</p></div>
         <div className="settings-option-control update-policy-block">
@@ -93,16 +103,6 @@ export function UpdateSettings({ settings, snapshot, onSettingsChange }: UpdateS
           <p className="update-policy-description">{policyDescriptions[settings.updatePolicy]}</p>
         </div>
       </section>
-      {snapshot?.notes && (
-        <section className="settings-section update-notes-section">
-          <div className="settings-field-heading"><h3>新版本更新内容</h3></div>
-          <ScrollArea className="update-notes-scroll-area" focusable={false}>
-            <div className="update-notes">
-              <Markdown>{snapshot.notes}</Markdown>
-            </div>
-          </ScrollArea>
-        </section>
-      )}
       <section className="settings-section update-changelog-section">
         <div className="settings-field-heading"><h3>更新日志</h3></div>
         <ScrollArea className="update-changelog-scroll-area" focusable={false}>
