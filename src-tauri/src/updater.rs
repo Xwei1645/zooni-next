@@ -17,6 +17,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_updater::{Update, UpdaterExt};
 
 use crate::settings::UpdatePolicy;
+use crate::settings::AppSettingsState;
 use crate::verification::{updater_pubkey, verify_package};
 
 const UPDATE_EVENT: &str = "updater-changed";
@@ -27,6 +28,8 @@ const INSTALLER_PREFIX: &str = "zooni-next-update-";
 const INSTALLER_SUFFIX: &str = ".installer";
 const AUTO_RETRY_LIMIT: u32 = 3;
 const RETRY_DELAY: Duration = Duration::from_secs(2);
+const DEFAULT_UPDATE_ENDPOINT: &str =
+    "https://github.com/Xwei1645/zooni-next/releases/latest/download/latest.json";
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -317,14 +320,26 @@ impl UpdateState {
             snapshot.error = None;
         })?;
 
+        let mirror = app
+            .state::<AppSettingsState>()
+            .update_mirror()
+            .map_err(|error| error.to_string())?;
+
+        let endpoint = effective_endpoint(&mirror);
+
         let checked = app
-            .updater()
+            .updater_builder()
+            .endpoints(vec![endpoint])
+            .map_err(|error| error.to_string())?
+            .build()
             .map_err(|error| error.to_string())?
             .check()
             .await;
 
         match checked {
             Ok(Some(update)) => {
+                let mut update = update;
+                update.download_url = mirrored_url(&mirror, update.download_url.as_str());
                 let version = update.version.clone();
                 let cached_path = self
                     .inner
@@ -674,6 +689,28 @@ impl UpdateState {
 
 fn installer_file_name(version: &str) -> String {
     format!("{INSTALLER_PREFIX}{version}{INSTALLER_SUFFIX}")
+}
+
+fn effective_endpoint(mirror: &str) -> url::Url {
+    mirrored_url(mirror, DEFAULT_UPDATE_ENDPOINT)
+}
+
+fn mirrored_url(mirror: &str, path: &str) -> url::Url {
+    let mirror = mirror.trim();
+    let parsed = url::Url::parse(path);
+
+    if mirror.is_empty() {
+        return parsed.unwrap_or_else(|_| {
+            url::Url::parse(DEFAULT_UPDATE_ENDPOINT).expect("default endpoint must parse")
+        });
+    }
+
+    match (&parsed, url::Url::parse(&format!("{}/{}", mirror.trim_end_matches('/'), path))) {
+        (Ok(_), Ok(mirrored)) => mirrored,
+        _ => parsed.unwrap_or_else(|_| {
+            url::Url::parse(DEFAULT_UPDATE_ENDPOINT).expect("default endpoint must parse")
+        }),
+    }
 }
 
 fn file_version(name: &str) -> Option<String> {

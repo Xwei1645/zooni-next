@@ -14,6 +14,7 @@ export interface AppSettings {
   launchAtStartup: boolean;
   windowLevel: WindowLevel;
   updatePolicy: UpdatePolicy;
+  updateMirror: string;
 }
 
 export const defaultSettings: AppSettings = {
@@ -25,6 +26,7 @@ export const defaultSettings: AppSettings = {
   launchAtStartup: false,
   windowLevel: "normal",
   updatePolicy: "notify",
+  updateMirror: "",
 };
 
 const DEFAULT_FONT_STACK =

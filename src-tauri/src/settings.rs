@@ -54,12 +54,22 @@ pub struct AppSettings {
     launch_at_startup: bool,
     window_level: WindowLevel,
     pub update_policy: UpdatePolicy,
+    #[serde(default)]
+    update_mirror: String,
 }
 
 impl AppSettings {
     fn is_valid(&self) -> bool {
-        !self.font_family.trim().is_empty() && self.background_opacity <= 100
+        !self.font_family.trim().is_empty()
+            && self.background_opacity <= 100
+            && is_valid_mirror(&self.update_mirror)
     }
+}
+
+fn is_valid_mirror(mirror: &str) -> bool {
+    let mirror = mirror.trim();
+    mirror.is_empty()
+        || (mirror.starts_with("http://") || mirror.starts_with("https://"))
 }
 
 impl Default for AppSettings {
@@ -73,6 +83,7 @@ impl Default for AppSettings {
             launch_at_startup: DEFAULT_LAUNCH_AT_STARTUP,
             window_level: WindowLevel::Normal,
             update_policy: UpdatePolicy::Notify,
+            update_mirror: String::new(),
         }
     }
 }
@@ -139,6 +150,14 @@ impl AppSettingsState {
             .snapshot
             .lock()
             .map(|snapshot| snapshot.clone())
+            .map_err(|error| error.to_string())
+    }
+
+    pub fn update_mirror(&self) -> Result<String, String> {
+        self.0
+            .snapshot
+            .lock()
+            .map(|snapshot| snapshot.settings.update_mirror.clone())
             .map_err(|error| error.to_string())
     }
 

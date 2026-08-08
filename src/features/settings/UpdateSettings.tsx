@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { Download, LoaderCircle, PackageCheck, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { AppSettings, UpdatePolicy } from "@/lib/appearance";
@@ -43,6 +45,22 @@ export function UpdateSettings({ settings, snapshot, onSettingsChange }: UpdateS
   const status = snapshot?.status;
   const isWorking = status === "checking" || status === "downloading" || status === "installing";
   const canInstall = status === "available" || status === "downloaded" || (status === "failed" && snapshot?.availableVersion != null);
+
+  const [mirrorDraft, setMirrorDraft] = useState(settings.updateMirror);
+  const [mirrorError, setMirrorError] = useState<string>();
+
+  useEffect(() => {
+    setMirrorDraft(settings.updateMirror);
+  }, [settings.updateMirror]);
+
+  function commitMirror() {
+    const value = mirrorDraft.trim();
+    const error = mirrorValidationMessage(value);
+    setMirrorError(error);
+    if (!error && value !== settings.updateMirror) {
+      onSettingsChange({ ...settings, updateMirror: value });
+    }
+  }
 
   function run(action: () => Promise<unknown>, scope: string) {
     void action().catch((error) => logError(scope, error));
@@ -103,6 +121,21 @@ export function UpdateSettings({ settings, snapshot, onSettingsChange }: UpdateS
           <p className="update-policy-description">{policyDescriptions[settings.updatePolicy]}</p>
         </div>
       </section>
+      <section className="settings-section settings-option-row settings-update-mirror-row">
+        <div className="settings-field-heading"><h3>镜像源</h3><p>留空则使用 GitHub 源。GitHub 地址将拼接到填写的地址之后。</p></div>
+        <div className="settings-option-control update-mirror-block">
+          <Input
+            className="update-mirror-input"
+            placeholder="https://example.com/"
+            aria-label="镜像源"
+            aria-invalid={!!mirrorError}
+            value={mirrorDraft}
+            onChange={(event) => { setMirrorDraft(event.target.value); setMirrorError(undefined); }}
+            onBlur={commitMirror}
+            onKeyDown={(event) => { if (event.key === "Enter") { commitMirror(); (event.target as HTMLInputElement).blur(); } }}
+          />
+        </div>
+      </section>
       <section className="settings-section update-changelog-section">
         <div className="settings-field-heading"><h3>更新日志</h3></div>
         <ScrollArea className="update-changelog-scroll-area" focusable={false}>
@@ -130,6 +163,13 @@ function lastCheckedDescription(lastCheckedAt?: string) {
   if (!lastCheckedAt) return "上次检查：尚未检查";
 
   return `上次检查：${new Date(lastCheckedAt).toLocaleString("zh-CN", { hour12: false })}`;
+}
+
+function mirrorValidationMessage(value: string): string | undefined {
+  if (!value) return undefined;
+  if (!/^https?:\/\//.test(value)) return "镜像源需以 http:// 或 https:// 开头";
+  if (!/^https?:\/\/[^\s/]+/.test(value)) return "镜像源需包含有效的域名";
+  return undefined;
 }
 
 function policyLabel(policy: UpdatePolicy) {
