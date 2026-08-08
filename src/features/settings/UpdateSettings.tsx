@@ -63,7 +63,7 @@ export function UpdateSettings({ settings, snapshot, onSettingsChange }: UpdateS
           <div className="update-actions">
             <Button type="button" variant="outline" size="sm" disabled={isWorking} onClick={() => run(checkForUpdate, "updater.check")}><RefreshCw aria-hidden="true" />检查更新</Button>
             {canInstall && (
-              <Button type="button" variant="default" size="sm" disabled={isWorking} onClick={() => run(installUpdate, "updater.install")}>
+              <Button type="button" variant="default" size="sm" className="shadow-none hover:shadow-none" disabled={isWorking} onClick={() => run(installUpdate, "updater.install")}>
                 {status === "downloaded" ? <PackageCheck aria-hidden="true" /> : <Download aria-hidden="true" />}
                 {status === "downloaded" ? "立即安装" : status === "failed" ? "重新下载并安装" : "下载并安装"}
               </Button>
